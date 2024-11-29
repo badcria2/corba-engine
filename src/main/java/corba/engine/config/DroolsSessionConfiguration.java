@@ -53,6 +53,7 @@ public class DroolsSessionConfiguration {
         }
     }
 
+
     private void loadRulesFromMongo(KieSession kieSession) {
         try (MongoClient mongoClient = MongoClients.create(mongoURI)) {
             MongoDatabase database = mongoClient.getDatabase("drools");

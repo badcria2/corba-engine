@@ -8,5 +8,6 @@ import java.util.List;
 
 public interface PersonService {
     Persona enviarcampania(Persona persona);
+    Persona enviarcampaniaMenor(Persona persona);
     List<Puerto> validarNE(List<Puerto> puertos);
 }

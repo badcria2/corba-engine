@@ -22,7 +22,12 @@ public class PersonServiceImpl implements PersonService {
         persona.setCampania("Campaña para mayores de edad");
         return persona;
     }
+    public Persona enviarcampaniaMenor(Persona persona) {
 
+        logger.info("Enviando campaña para persona: " + persona.getNombre() + ", edad: " + persona.getEdad());
+        persona.setCampania("Campaña para menor de edad");
+        return persona;
+    }
     @Override
     public List<Puerto> validarNE(List<Puerto> puertos) {
         for (Puerto puerto : puertos) {
