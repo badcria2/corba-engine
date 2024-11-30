@@ -1,15 +1,5 @@
  spring:
   data:
     mongodb:
-      uri: mongodb://root:85857855@localhost:27017/drools?authSource=admin
-  datasource:
-     url: jdbc:mysql://localhost:3306/db_drools
-     username: root
-     password: 85857855xD123
-     driver-class-name: com.mysql.cj.jdbc.Driver
-  jpa:
-     hibernate:
-       ddl-auto: update
-     database-platform: org.hibernate.dialect.MySQL8Dialect
-     show-sql: true
+      uri: mongodb://root:85857855@localhost:28000/drools?authSource=admin
 

@@ -1,13 +1,10 @@
 package corba.engine.services;
 
-import corba.engine.dao.entity.Puerto;
-import corba.engine.dao.response.ClienteInfoDTO;
 import corba.engine.models.Persona;
 import corba.engine.rules.PersonService;
 import org.kie.api.runtime.KieSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import corba.engine.repository.RuleRepository;
 
 import java.util.List;
 import java.util.logging.Logger;
@@ -52,18 +49,5 @@ public class RuleService {
         actionService.enviarcampania(persona);
     }
 
-    public void validarNE(List<Puerto> persona) {
-        actionService.validarNE(persona);
-    }
-    public void executeRulesWithClient(ClienteInfoDTO clienteInfoDTO) {
 
-        logger.info("Ejecutando reglas...");
-        kieSession.insert(clienteInfoDTO.getPuertos());
-        kieSession.insert(actionService); // Insert the service if needed in the rules
-
-        int reglasEjecutadas = kieSession.fireAllRules();
-        logger.info("Reglas ejecutadas: " + reglasEjecutadas + "   reglass");
-
-        removePersonsFromSession();
-    }
 }
