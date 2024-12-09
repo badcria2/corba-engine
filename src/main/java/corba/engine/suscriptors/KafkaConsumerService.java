@@ -3,6 +3,7 @@ package corba.engine.suscriptors;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import corba.engine.AvroDeserializer;
@@ -38,6 +39,8 @@ public class KafkaConsumerService {
 
             // Deserializar el JSON
             ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+
             List<KafkaData> kafkaDataList = objectMapper.readValue(json, objectMapper.getTypeFactory().constructCollectionType(List.class, KafkaData.class));
 
             // Imprimir el resultado

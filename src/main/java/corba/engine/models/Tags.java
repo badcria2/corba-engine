@@ -1,32 +1,42 @@
 package corba.engine.models;
 
-public   class Tags {
-    private String componentName;
-    private String source;
-    private String subscriptionName;
 
-    // Getters y setters
-    public String getComponentName() {
-        return componentName;
-    }
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-    public void setComponentName(String componentName) {
-        this.componentName = componentName;
-    }
+public class Tags {
 
-    public String getSource() {
-        return source;
-    }
+        @JsonProperty("component_name")
+        private String componentName;
 
-    public void setSource(String source) {
-        this.source = source;
-    }
+        @JsonProperty("source")
+        private String source;
 
-    public String getSubscriptionName() {
-        return subscriptionName;
-    }
+        @JsonProperty("subscription_name")
+        private String subscriptionName;
 
-    public void setSubscriptionName(String subscriptionName) {
-        this.subscriptionName = subscriptionName;
-    }
+        // Getters y Setters
+
+        public String getComponentName() {
+            return componentName;
+        }
+
+        public void setComponentName(String componentName) {
+            this.componentName = componentName;
+        }
+
+        public String getSource() {
+            return source;
+        }
+
+        public void setSource(String source) {
+            this.source = source;
+        }
+
+        public String getSubscriptionName() {
+            return subscriptionName;
+        }
+
+        public void setSubscriptionName(String subscriptionName) {
+            this.subscriptionName = subscriptionName;
+        }
 }
