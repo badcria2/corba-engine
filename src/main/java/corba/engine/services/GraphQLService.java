@@ -16,7 +16,7 @@ public class GraphQLService {
 
     // Constructor que inicializa WebClient con la URL base
     public GraphQLService(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl("http://10.95.90.64:10000/graphiql?path=/oc/graphql").build();
+        this.webClient = webClientBuilder.baseUrl("http://10.95.90.64:10000/oc/graphql").build();
     }
 
     // Método que consulta los grupos disponibles
