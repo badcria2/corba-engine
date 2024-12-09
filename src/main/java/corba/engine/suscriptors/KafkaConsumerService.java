@@ -2,6 +2,9 @@ package corba.engine.suscriptors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import corba.engine.AvroDeserializer;
 import corba.engine.models.KafkaData;
 import corba.engine.models.Tags;
@@ -11,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
+import java.util.Iterator;
 import java.util.List;
 
 @Service
@@ -27,31 +31,19 @@ public class KafkaConsumerService {
     @KafkaListener(topics = "__consumer_offsets", groupId = "mi-grupo-consumidor")
     public void listen(String message) {
         try {
-            String schemaString = "{\n" +
-                    "  \"type\": \"record\",\n" +
-                    "  \"name\": \"KafkaData\",\n" +
-                    "  \"fields\": [\n" +
-                    "    {\"name\": \"name\", \"type\": \"string\"},\n" +
-                    "    {\"name\": \"timestamp\", \"type\": \"long\"},\n" +
-                    "    {\"name\": \"tags\", \"type\": {\n" +
-                    "      \"type\": \"record\",\n" +
-                    "      \"name\": \"Tags\",\n" +
-                    "      \"fields\": [\n" +
-                    "        {\"name\": \"component_name\", \"type\": \"string\"},\n" +
-                    "        {\"name\": \"source\", \"type\": \"string\"},\n" +
-                    "        {\"name\": \"subscription-name\", \"type\": \"string\"}\n" +
-                    "      ]\n" +
-                    "    }},\n" +
-                    "    {\"name\": \"values\", \"type\": {\n" +
-                    "      \"type\": \"map\",\n" +
-                    "      \"values\": \"string\"\n" +
-                    "    }}\n" +
-                    "  ]\n" +
-                    "}";
+            String json = "[ { \"name\" : \"default-1733336542\", \"timestamp\" : 1733347504252893801, \"tags\" : { \"component_name\" : \"och 1/2/c1\", \"source\" : \"10.95.90.87\", \"subscription-name\" : \"default-1733336542\" }, \"values\" : { \"/components/component/optical-channel/state/output-power/instant\" : \"-8.32\" } } ]";
 
-            // Luego puedes usar `schemaString` en el método de deserialización
-            byte[] avroData = message.getBytes("UTF-8");  // Convierte el mensaje a bytes si es necesario
-            List<KafkaData> kafkaDataList = AvroDeserializer.deserializeAvroList(avroData, schemaString);
+            // Preprocesar el JSON antes de deserializarlo
+            json = preprocessJson(json);
+
+            // Deserializar el JSON
+            ObjectMapper objectMapper = new ObjectMapper();
+            List<KafkaData> kafkaDataList = objectMapper.readValue(json, objectMapper.getTypeFactory().constructCollectionType(List.class, KafkaData.class));
+
+            // Imprimir el resultado
+            for (KafkaData data : kafkaDataList) {
+                System.out.println(data);
+            }
 
 
             processKafkaData(kafkaDataList);
@@ -61,6 +53,40 @@ public class KafkaConsumerService {
             System.out.println("Error al deserializar AVRO: " +  e);
         } catch (Exception e) {
             System.out.println("Error general procesando el mensaje: " + e);
+        }
+    }
+    private static String preprocessJson(String json) throws Exception {
+        // Crear un ObjectMapper
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // Convertir el JSON a un JsonNode
+        JsonNode rootNode = objectMapper.readTree(json);
+
+        // Iterar sobre los elementos y reemplazar los campos con guiones
+        if (rootNode.isArray()) {
+            for (JsonNode element : rootNode) {
+                // Verificar si el campo "tags" existe y es un objeto
+                JsonNode tagsNode = element.get("tags");
+                if (tagsNode != null && tagsNode.isObject()) {
+                    // Cambiar "subscription-name" a "subscription_name"
+                    replaceFieldName((ObjectNode) tagsNode, "subscription-name", "subscription_name");
+                }
+            }
+        }
+
+        // Convertir de nuevo el JsonNode a una cadena JSON
+        return objectMapper.writeValueAsString(rootNode);
+    }
+
+    // Método para reemplazar un nombre de campo en un ObjectNode
+    private static void replaceFieldName(ObjectNode objectNode, String oldName, String newName) {
+        Iterator<String> fieldNames = objectNode.fieldNames();
+        while (fieldNames.hasNext()) {
+            String fieldName = fieldNames.next();
+            if (fieldName.equals(oldName)) {
+                JsonNode fieldValue = objectNode.remove(fieldName);  // Eliminar el campo original
+                objectNode.set(newName, fieldValue);  // Establecer el campo con el nuevo nombre
+            }
         }
     }
     private void processKafkaData(List<KafkaData> data) {
