@@ -1,5 +1,5 @@
- spring:
-   data:
+spring:
+  data:
     mongodb:
       uri: mongodb://root:85857855@localhost:28000/drools?authSource=admin
   kafka:
@@ -10,4 +10,4 @@
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   webflux:
-     base-path: /oc/graphql
+    base-path: /oc/graphql
