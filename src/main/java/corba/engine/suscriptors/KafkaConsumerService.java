@@ -1,10 +1,12 @@
 package corba.engine.suscriptors;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import corba.engine.AvroDeserializer;
 import corba.engine.models.KafkaData;
 import corba.engine.models.Tags;
 import corba.engine.services.RuleService;
+import org.apache.avro.AvroRuntimeException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
@@ -53,8 +55,12 @@ public class KafkaConsumerService {
 
 
             processKafkaData(kafkaDataList);
+        } catch (JsonProcessingException e) {
+            System.out.println("Error de procesamiento JSON: " + e);
+        }       catch (AvroRuntimeException e) {
+            System.out.println("Error al deserializar AVRO: " +  e);
         } catch (Exception e) {
-            System.err.println("Error procesando el mensaje: " + e.getMessage());
+            System.out.println("Error general procesando el mensaje: " + e);
         }
     }
     private void processKafkaData(List<KafkaData> data) {
