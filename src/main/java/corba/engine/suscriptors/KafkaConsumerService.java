@@ -1,6 +1,7 @@
 package corba.engine.suscriptors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import corba.engine.AvroDeserializer;
 import corba.engine.models.KafkaData;
 import corba.engine.models.Tags;
 import corba.engine.services.RuleService;
@@ -24,7 +25,33 @@ public class KafkaConsumerService {
     @KafkaListener(topics = "__consumer_offsets", groupId = "mi-grupo-consumidor")
     public void listen(String message) {
         try {
-            List<KafkaData> kafkaDataList = objectMapper.readValue(message, objectMapper.getTypeFactory().constructCollectionType(List.class, KafkaData.class));
+            String schemaString = "{\n" +
+                    "  \"type\": \"record\",\n" +
+                    "  \"name\": \"KafkaData\",\n" +
+                    "  \"fields\": [\n" +
+                    "    {\"name\": \"name\", \"type\": \"string\"},\n" +
+                    "    {\"name\": \"timestamp\", \"type\": \"long\"},\n" +
+                    "    {\"name\": \"tags\", \"type\": {\n" +
+                    "      \"type\": \"record\",\n" +
+                    "      \"name\": \"Tags\",\n" +
+                    "      \"fields\": [\n" +
+                    "        {\"name\": \"component_name\", \"type\": \"string\"},\n" +
+                    "        {\"name\": \"source\", \"type\": \"string\"},\n" +
+                    "        {\"name\": \"subscription-name\", \"type\": \"string\"}\n" +
+                    "      ]\n" +
+                    "    }},\n" +
+                    "    {\"name\": \"values\", \"type\": {\n" +
+                    "      \"type\": \"map\",\n" +
+                    "      \"values\": \"string\"\n" +
+                    "    }}\n" +
+                    "  ]\n" +
+                    "}";
+
+            // Luego puedes usar `schemaString` en el método de deserialización
+            byte[] avroData = message.getBytes("UTF-8");  // Convierte el mensaje a bytes si es necesario
+            List<KafkaData> kafkaDataList = AvroDeserializer.deserializeAvroList(avroData, schemaString);
+
+
             processKafkaData(kafkaDataList);
         } catch (Exception e) {
             System.err.println("Error procesando el mensaje: " + e.getMessage());
