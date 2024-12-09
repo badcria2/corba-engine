@@ -3,16 +3,14 @@ package corba.engine.config;
 import com.mongodb.client.*;
 import corba.engine.models.Persona;
 import corba.engine.repository.RuleRepository;
-import corba.engine.rules.PersonService;
+import corba.engine.rules.EventCorbaService;
 import corba.engine.rules.Rule;
 import org.bson.Document;
-import org.drools.core.io.impl.ByteArrayResource;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
 import org.kie.api.builder.KieModule;
 import org.kie.api.runtime.KieContainer;
-import org.kie.internal.io.ResourceFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -85,11 +83,11 @@ public class DroolsConfiguration {
         StringBuilder contentBuilder = new StringBuilder();
         contentBuilder.append("package ").append(rule.getPackageName()).append("\n\n");
         contentBuilder.append("import ").append(Persona.class.getCanonicalName()).append(";\n"); // Importa la clase Persona
-        contentBuilder.append("import ").append(PersonService.class.getCanonicalName()).append(";\n"); // Importa el servicio
+        contentBuilder.append("import ").append(EventCorbaService.class.getCanonicalName()).append(";\n"); // Importa el servicio
         contentBuilder.append("rule \"").append(rule.getName()).append("\"\n");
         contentBuilder.append("  when\n");
         contentBuilder.append("    $persona : Persona(edad < 18)\n"); // Modifica la condición
-        contentBuilder.append("    $personService : ").append(PersonService.class.getSimpleName()).append("()\n"); // Declara el servicio
+        contentBuilder.append("    $personService : ").append(EventCorbaService.class.getSimpleName()).append("()\n"); // Declara el servicio
         contentBuilder.append("  then\n");
         contentBuilder.append("    $personService.enviarcampania($persona);\n"); // Usa el servicio para enviar la campaña
         contentBuilder.append("end\n");

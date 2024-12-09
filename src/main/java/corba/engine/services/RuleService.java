@@ -1,12 +1,12 @@
 package corba.engine.services;
 
+import corba.engine.models.KafkaData;
 import corba.engine.models.Persona;
-import corba.engine.rules.PersonService;
+import corba.engine.rules.EventCorbaService;
 import org.kie.api.runtime.KieSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.logging.Logger;
 
 @Service
@@ -14,13 +14,25 @@ public class RuleService {
     private static final Logger logger = Logger.getLogger(RuleService.class.getName());
 
     @Autowired
-    private PersonService actionService;
+    private EventCorbaService actionService;
     @Autowired
     private KieSession kieSession;
     public void executeRulesWithPerson(Persona persona) {
 
         logger.info("Ejecutando reglas...");
         kieSession.insert(persona);
+        kieSession.insert(actionService); // Insert the service if needed in the rules
+
+        int reglasEjecutadas = kieSession.fireAllRules();
+        logger.info("Reglas ejecutadas: " + reglasEjecutadas + "   reglass");
+
+        removePersonsFromSession();
+    }
+
+    public void executeRulesWithEventKafka(KafkaData kafkaData) {
+
+        logger.info("Ejecutando reglas...");
+        kieSession.insert(kafkaData);
         kieSession.insert(actionService); // Insert the service if needed in the rules
 
         int reglasEjecutadas = kieSession.fireAllRules();

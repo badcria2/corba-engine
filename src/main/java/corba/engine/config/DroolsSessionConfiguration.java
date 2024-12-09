@@ -4,7 +4,7 @@ import com.mongodb.MongoException;
 import com.mongodb.client.*;
 import corba.engine.repository.RuleRepository;
 import corba.engine.rules.CustomAgendaEventListener;
-import corba.engine.rules.PersonService;
+import corba.engine.rules.EventCorbaService;
 import corba.engine.rules.Rule;
 import org.bson.Document;
 import org.kie.api.runtime.KieContainer;
@@ -15,7 +15,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PreDestroy;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -27,7 +26,7 @@ public class DroolsSessionConfiguration {
     private RuleRepository ruleRepository;
 
     @Autowired
-    private PersonService actionService;
+    private EventCorbaService actionService;
 
     @Value("${spring.data.mongodb.uri}")
     private String mongoURI;

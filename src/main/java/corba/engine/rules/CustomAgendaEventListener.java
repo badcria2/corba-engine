@@ -10,11 +10,11 @@ import java.util.logging.Logger;
 public class CustomAgendaEventListener extends DefaultAgendaEventListener {
     private static final Logger logger = Logger.getLogger(CustomAgendaEventListener.class.getName());
 
-   // private final PersonService actionService;
+   // private final EventCorbaService actionService;
 
-    public CustomAgendaEventListener(PersonService personService) {
+    public CustomAgendaEventListener(EventCorbaService eventCorbaService) {
         logger.info("Se crea el listener: " + CustomAgendaEventListener.class.getName());
-        //this.actionService = personService;
+        //this.actionService = eventCorbaService;
     }
 
     @Override
