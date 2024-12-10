@@ -31,4 +31,17 @@ public class GraphQLService {
                 .bodyToMono(GraphQLResponse.class)  // Mapea la respuesta a la clase GraphQLResponse
                 .onErrorResume(error -> Mono.error(new RuntimeException("Error al consultar GraphQL: " + error.getMessage())));
     }
+
+    public Mono<GraphQLResponse> getAllNetworkElementsByGroup(String group) {
+        String query = "{ getAllNetworkElementsByGroup(group: " + group +" }";
+
+        // Realiza la consulta GraphQL y mapea la respuesta a GraphQLResponse
+        return webClient.post()
+                .bodyValue("{\"query\":\"" + query + "\"}")
+                .header("Content-Type", "application/json")
+                .retrieve()
+                .bodyToMono(GraphQLResponse.class)  // Mapea la respuesta a la clase GraphQLResponse
+                .onErrorResume(error -> Mono.error(new RuntimeException("Error al consultar GraphQL: " + error.getMessage())));
+    }
+
 }

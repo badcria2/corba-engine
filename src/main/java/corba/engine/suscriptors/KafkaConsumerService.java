@@ -22,33 +22,56 @@ import java.util.List;
 public class KafkaConsumerService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final RuleService ruleService;
-
+    private String avroJsonDeserialize;
     @Autowired
     public KafkaConsumerService(RuleService ruleService) {
+
         this.ruleService = ruleService;
+        this.avroJsonDeserialize = "[ { \"name\" : \"default-1733336542\", \"timestamp\" : 1733347504252893801, \"tags\" : { \"component_name\" : \"och 1/2/c1\", \"source\" : \"10.95.90.87\", \"subscription-name\" : \"default-1733336542\" }, \"values\" : { \"/components/component/optical-channel/state/output-power/instant\" : \"-8.32\" } } ]";
+
     }
+    @KafkaListener(topics = "opt-term-inout-pwr", groupId = "mi-grupo-consumidor")
+    public void listen_opt_term_inout_pwr(String message) {
 
-
-    @KafkaListener(topics = "__consumer_offsets", groupId = "mi-grupo-consumidor")
-    public void listen(String message) {
         try {
-            String json = "[ { \"name\" : \"default-1733336542\", \"timestamp\" : 1733347504252893801, \"tags\" : { \"component_name\" : \"och 1/2/c1\", \"source\" : \"10.95.90.87\", \"subscription-name\" : \"default-1733336542\" }, \"values\" : { \"/components/component/optical-channel/state/output-power/instant\" : \"-8.32\" } } ]";
-
             // Preprocesar el JSON antes de deserializarlo
-            json = preprocessJson(json);
+            String avroJsonDeserializeTemp = preprocessJson(avroJsonDeserialize);
 
             // Deserializar el JSON
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
 
-            List<KafkaData> kafkaDataList = objectMapper.readValue(json, objectMapper.getTypeFactory().constructCollectionType(List.class, KafkaData.class));
+            List<KafkaData> kafkaDataList = objectMapper.readValue(avroJsonDeserializeTemp, objectMapper.getTypeFactory().constructCollectionType(List.class, KafkaData.class));
 
             // Imprimir el resultado
             for (KafkaData data : kafkaDataList) {
                 System.out.println(data);
             }
+            processKafkaData(kafkaDataList);
+        } catch (JsonProcessingException e) {
+            System.out.println("Error de procesamiento JSON: " + e);
+        }       catch (AvroRuntimeException e) {
+            System.out.println("Error al deserializar AVRO: " +  e);
+        } catch (Exception e) {
+            System.out.println("Error general procesando el mensaje: " + e);
+        }
+    }
+    @KafkaListener(topics = "opt-term-target-out-pwr", groupId = "mi-grupo-consumidor")
+    public void listen_opt_term_target_out_pwr(String message) {
+        try {
+            // Preprocesar el JSON antes de deserializarlo
+            String avroJsonDeserializeTemp = preprocessJson(avroJsonDeserialize);
 
+            // Deserializar el JSON
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
 
+            List<KafkaData> kafkaDataList = objectMapper.readValue(avroJsonDeserializeTemp, objectMapper.getTypeFactory().constructCollectionType(List.class, KafkaData.class));
+
+            // Imprimir el resultado
+            for (KafkaData data : kafkaDataList) {
+                System.out.println(data);
+            }
             processKafkaData(kafkaDataList);
         } catch (JsonProcessingException e) {
             System.out.println("Error de procesamiento JSON: " + e);
@@ -95,9 +118,6 @@ public class KafkaConsumerService {
     private void processKafkaData(List<KafkaData> data) {
         for (KafkaData dataEvaluar: data) {
             Tags tags = dataEvaluar.getTags();
-            if ("10.95.90.87".equals(tags.getSource())) {
-                System.out.println("Alerta: Los datos provienen de la fuente especificada (" + tags.getSource() + ").");
-            }
             ruleService.executeRulesWithEventKafka(dataEvaluar);
 
             System.out.println("Datos transformados: ");

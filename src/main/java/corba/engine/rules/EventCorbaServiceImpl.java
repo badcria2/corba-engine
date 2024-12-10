@@ -1,26 +1,15 @@
 package corba.engine.rules;
 
 import corba.engine.models.KafkaData;
+import corba.engine.response.NetworkElement;
 import corba.engine.models.Persona;
 import corba.engine.models.Tags;
 import corba.engine.services.GraphQLService;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.io.Decoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
-import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericDatumReader;
-import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.io.Decoder;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
+import java.util.List;
 import java.util.logging.Logger;
 
 @Service
@@ -48,22 +37,60 @@ public class EventCorbaServiceImpl implements EventCorbaService {
     public KafkaData evalueAvailablesGroups(KafkaData kafkaData) {
         System.out.println("INGRESANDO A DROOLSS:: ");
         logger.info("Ingresando a adroos_" + kafkaData.getTags().getSource());
+
         // Llamada a getAllAvailableGroups
         graphQLService.getAllAvailableGroups()
                 .doOnTerminate(() -> {
-                    // Después de que la consulta termine, puedes procesar los grupos obtenidos
+                    // Después de que la consulta termine
                     System.out.println("Consulta de GraphQL terminada.");
                 })
                 .subscribe(response -> {
-                    // Aquí puedes procesar los grupos disponibles de la respuesta
+                    // Procesar la respuesta
                     if (response != null && response.getData() != null) {
                         System.out.println("Grupos disponibles: " + response.getData().getGetAllAvailableGroups());
-                        // Puedes tomar decisiones basadas en los grupos obtenidos
+
+                        // Llamar al siguiente método con un grupo específico
+                        executeGetAllNetworkElementsByGroup(response.getData().getGetAllAvailableGroups().get(1), kafkaData);
                     }
                 });
 
         return kafkaData;
     }
+
+    private void executeGetAllNetworkElementsByGroup(String group, KafkaData kafkaData) {
+        graphQLService.getAllNetworkElementsByGroup(group)
+                .doOnTerminate(() -> {
+                    // Después de que la consulta termine
+                    System.out.println("Consulta de GraphQL terminada.");
+                })
+                .subscribe(response -> {
+                    // Procesar la respuesta
+                    if (response != null && response.getData() != null) {
+                        System.out.println("Datos de la red obtenidos: " + response.getData().getAllNetworkElementsByGroup());
+
+                        // Buscar el elemento asociado al source de KafkaData
+                        String source = kafkaData.getTags().getSource(); // Obtener el source de KafkaData
+                        String name = findNameByManagementIp(source, response.getData().getAllNetworkElementsByGroup());
+
+                        if (name != null) {
+                            System.out.println("El nombre asociado al source " + source + " es: " + name);
+                        } else {
+                            System.out.println("No se encontró un nombre asociado al source " + source);
+                        }
+                    }
+                });
+    }
+
+    // Método para buscar el nombre basado en la IP de gestión
+    private String findNameByManagementIp(String source, List<NetworkElement> elements) {
+        for (NetworkElement element : elements) {
+            if (source.equals(element.getManagementIp())) {
+                return element.getName();
+            }
+        }
+        return null; // Si no se encuentra la IP, retorna null
+    }
+
 
 
 }

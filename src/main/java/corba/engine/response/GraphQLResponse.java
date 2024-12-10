@@ -16,14 +16,23 @@ public class GraphQLResponse {
 
     public static class Data {
         private List<String> getAllAvailableGroups;
+        private List<NetworkElement> getAllNetworkElementsByGroup;
 
         // Getters y Setters
         public List<String> getGetAllAvailableGroups() {
             return getAllAvailableGroups;
         }
-
         public void setGetAllAvailableGroups(List<String> getAllAvailableGroups) {
             this.getAllAvailableGroups = getAllAvailableGroups;
         }
+
+        public void setGetAllNetworkElementsByGroup(List<String> getAllNetworkElementsByGroup) {
+            this.getAllAvailableGroups = getAllNetworkElementsByGroup;
+        }
+        public List<NetworkElement> getAllNetworkElementsByGroup() {
+            return getAllNetworkElementsByGroup;
+        }
+
+
     }
 }
