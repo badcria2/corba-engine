@@ -20,6 +20,8 @@ public class GraphQLResponse {
     @JsonIgnoreProperties(ignoreUnknown = true)
 
     public static class Data {
+        @JsonProperty("getAllAvailableGroups")
+
         private List<String> getAllAvailableGroups;
 
         @JsonProperty("getAllNetworkElementsByGroup")

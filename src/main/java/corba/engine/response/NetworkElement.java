@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class NetworkElement {
     private String name;
 
-    @JsonProperty("managementIp")
     private String managementIp;
 
     public String getName() {

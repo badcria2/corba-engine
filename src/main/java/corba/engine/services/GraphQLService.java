@@ -41,15 +41,11 @@ public class GraphQLService {
                 .header("Content-Type", "application/json")
                 .bodyValue("{\"query\":\"" + query + "\"}")
                 .retrieve()
-                .bodyToMono(String.class) // Leer como String para inspección
+                .bodyToMono(GraphQLResponse.class)  // Deserializa directamente a GraphQLResponse
                 .doOnNext(json -> System.out.println("Respuesta GraphQL: " + json)) // Log de la respuesta
-                .map(json -> {
-                    ObjectMapper mapper = new ObjectMapper();
-                    try {
-                        return mapper.readValue(json, GraphQLResponse.class); // Deserializar manualmente
-                    } catch (Exception e) {
-                        throw new RuntimeException("Error deserializando JSON: " + e.getMessage(), e);
-                    }
+                .doOnNext(response -> {
+                    // Si necesitas imprimir la respuesta para depuración
+                    System.out.println("Respuesta GraphQL: " + response);
                 })
                 .onErrorResume(error -> Mono.error(new RuntimeException("Error al consultar GraphQL: " + error.getMessage())));
     }
