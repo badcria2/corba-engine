@@ -1,5 +1,6 @@
 package corba.engine.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import corba.engine.response.GraphQLResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -33,15 +34,24 @@ public class GraphQLService {
     }
 
     public Mono<GraphQLResponse> getAllNetworkElementsByGroup(String group) {
-        String query = String.format("query MyQuery { getAllNetworkElementsByGroup(group: \\\"%s\\\") }", group);
+        String query = String.format("query MyQuery { getAllNetworkElementsByGroup(group: \"%s\") { name managementIp } }", group);
 
-        // Realiza la consulta GraphQL y mapea la respuesta a GraphQLResponse
         return webClient.post()
-                .bodyValue("{\"query\":\"" + query + "\"}")
                 .header("Content-Type", "application/json")
+                .bodyValue("{\"query\":\"" + query + "\"}")
                 .retrieve()
-                .bodyToMono(GraphQLResponse.class)  // Mapea la respuesta a la clase GraphQLResponse
+                .bodyToMono(String.class) // Leer como String para inspección
+                .doOnNext(json -> System.out.println("Respuesta GraphQL: " + json)) // Log de la respuesta
+                .map(json -> {
+                    ObjectMapper mapper = new ObjectMapper();
+                    try {
+                        return mapper.readValue(json, GraphQLResponse.class); // Deserializar manualmente
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error deserializando JSON: " + e.getMessage(), e);
+                    }
+                })
                 .onErrorResume(error -> Mono.error(new RuntimeException("Error al consultar GraphQL: " + error.getMessage())));
     }
+
 
 }
