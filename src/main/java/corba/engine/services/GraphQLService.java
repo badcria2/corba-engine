@@ -34,7 +34,8 @@ public class GraphQLService {
     }
 
     public Mono<GraphQLResponse> getAllNetworkElementsByGroup(String group) {
-        String query = String.format("query MyQuery { getAllNetworkElementsByGroup(group: \"%s\") { name managementIp } }", group);
+        String query = String.format("query MyQuery { getAllNetworkElementsByGroup(group: \\\"%s\\\") }", group);
+
 
         return webClient.post()
                 .header("Content-Type", "application/json")
