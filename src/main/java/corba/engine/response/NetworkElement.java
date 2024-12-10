@@ -1,5 +1,9 @@
 package corba.engine.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+
 public class NetworkElement {
     private String name;
     private String managementIp;
