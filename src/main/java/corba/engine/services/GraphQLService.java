@@ -33,7 +33,7 @@ public class GraphQLService {
     }
 
     public Mono<GraphQLResponse> getAllNetworkElementsByGroup(String group) {
-        String query = String.format(" { getAllNetworkElementsByGroup(group: \"%s\") }", group);
+        String query = String.format("query MyQuery { getAllNetworkElementsByGroup(group: \"%s\") }", group);
 
         // Realiza la consulta GraphQL y mapea la respuesta a GraphQLResponse
         return webClient.post()
