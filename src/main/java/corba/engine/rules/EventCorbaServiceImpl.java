@@ -1,25 +1,31 @@
 package corba.engine.rules;
 
 import corba.engine.models.KafkaData;
+import corba.engine.request.KafkaRequest;
 import corba.engine.response.NetworkElement;
 import corba.engine.models.Persona;
-import corba.engine.models.Tags;
 import corba.engine.services.GraphQLService;
+import corba.engine.suscriptors.KafkaProducerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 @Service
 public class EventCorbaServiceImpl implements EventCorbaService {
     private final GraphQLService graphQLService;
+    private final KafkaProducerService kafkaProducerService;
 
     private static final Logger logger = Logger.getLogger(EventCorbaServiceImpl.class.getName());
     @Autowired
-    public EventCorbaServiceImpl(GraphQLService graphQLService) {
+    public EventCorbaServiceImpl(GraphQLService graphQLService, KafkaProducerService kafkaProducerService) {
         this.graphQLService = graphQLService;
+        this.kafkaProducerService = kafkaProducerService;
     }
     @Override
     public Persona enviarcampania(Persona persona) {
@@ -74,6 +80,22 @@ public class EventCorbaServiceImpl implements EventCorbaService {
 
                         if (name != null) {
                             System.out.println("El nombre asociado al source " + source + " es: " + name);
+                            // Crear la lista de mensajes para KafkaRequest
+                            List<Map<String, Object>> messages = new ArrayList<>();
+                            Map<String, Object> message = new HashMap<>();
+
+                            if (name != null) {
+                                message.put("source", source);
+                                message.put("message", "El nombre asociado al source " + source + " es: " + name);
+                            } else {
+                                message.put("source", source);
+                                message.put("message", "No se encontró un nombre asociado al source " + source);
+                            }
+
+                            messages.add(message);
+                            // Crear KafkaRequest y enviarlo
+                            KafkaRequest kafkaRequest = new KafkaRequest(messages);
+                            kafkaProducerService.sendMessage("opt-alert-drools", kafkaRequest);
                         } else {
                             System.out.println("No se encontró un nombre asociado al source " + source);
                         }

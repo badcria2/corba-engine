@@ -43,5 +43,20 @@ public class GraphQLResponse {
         public void setGetAllNetworkElementsByGroup(List<NetworkElement> getAllNetworkElementsByGroup) {
             this.getAllNetworkElementsByGroup = getAllNetworkElementsByGroup;
         }
+
+        @Override
+        public String toString() {
+            return "Data{" +
+                    "getAllAvailableGroups=" + getAllAvailableGroups +
+                    ", getAllNetworkElementsByGroup=" + getAllNetworkElementsByGroup +
+                    '}';
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "GraphQLResponse{" +
+                "data=" + data +
+                '}';
     }
 }
