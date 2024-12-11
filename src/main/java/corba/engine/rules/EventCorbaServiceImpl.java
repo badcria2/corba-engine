@@ -18,10 +18,12 @@ import java.util.Map;
 public class EventCorbaServiceImpl implements EventCorbaService {
 
     private final GraphQLService graphQLService;
+    private final KafkaProducerService kafkaProducerService;
 
     @Autowired
-    public EventCorbaServiceImpl(GraphQLService graphQLService) {
+    public EventCorbaServiceImpl(GraphQLService graphQLService, KafkaProducerService kafkaProducerService) {
         this.graphQLService = graphQLService;
+        this.kafkaProducerService = kafkaProducerService;
     }
 
     @Override
@@ -68,9 +70,8 @@ public class EventCorbaServiceImpl implements EventCorbaService {
                     if (response != null && response.getData() != null) {
                         List<NetworkElement> networkElements = response.getData().getAllNetworkElementsByGroup();
                         System.out.println("Elementos de red obtenidos: " + networkElements);
-                        String source = kafkaData.getTags().getSource();
-                        String name = findNameByManagementIp(source, networkElements);
-                        sendMessageToKafka("El nombre asociado al source "+ source + " es : " + name);
+
+                        processAndSendToKafka(kafkaData, networkElements);
                     } else {
                         System.out.println("No se obtuvieron datos de la red para el grupo: " + group);
                     }
@@ -81,7 +82,7 @@ public class EventCorbaServiceImpl implements EventCorbaService {
         String source = kafkaData.getTags().getSource();
         String name = findNameByManagementIp(source, networkElements);
 
-       /* List<Map<String, Object>> messages = new ArrayList<>();
+        List<Map<String, Object>> messages = new ArrayList<>();
         Map<String, Object> message = new HashMap<>();
 
         if (name != null) {
@@ -92,15 +93,15 @@ public class EventCorbaServiceImpl implements EventCorbaService {
             message.put("source", source);
             message.put("message", "No se encontró un nombre asociado al source " + source);
             System.out.println("No se encontró un nombre asociado al source: " + source);
-        }*/
+        }
 
-        //messages.add(message);
-        //sendMessageToKafka(new KafkaRequest(messages));
+        messages.add(message);
+        sendMessageToKafka(new KafkaRequest(messages));
     }
 
-    private void sendMessageToKafka(String kafkaRequest) {
+    private void sendMessageToKafka(KafkaRequest kafkaRequest) {
         try {
-            KafkaProducerService.sendMessageToKafka("test-topic", kafkaRequest);
+            kafkaProducerService.sendMessage("opt-alert-drools", kafkaRequest);
             System.out.println("Mensaje enviado a Kafka: " + kafkaRequest);
         } catch (Exception e) {
             System.out.println("Error al enviar mensaje a Kafka: " + e);
