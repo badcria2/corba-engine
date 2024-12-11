@@ -10,7 +10,6 @@ import corba.engine.suscriptors.KafkaProducerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,35 +21,35 @@ public class EventCorbaServiceImpl implements EventCorbaService {
     private final GraphQLService graphQLService;
 
     private static final Logger logger = Logger.getLogger(EventCorbaServiceImpl.class.getName());
+
     @Autowired
     public EventCorbaServiceImpl(GraphQLService graphQLService) {
         this.graphQLService = graphQLService;
     }
+
     @Override
     public Persona enviarcampania(Persona persona) {
-
         logger.info("Enviando campaña para persona: " + persona.getNombre() + ", edad: " + persona.getEdad());
         persona.setCampania("Campaña para mayores de edad");
         return persona;
     }
-    public Persona enviarcampaniaMenor(Persona persona) {
 
+    public Persona enviarcampaniaMenor(Persona persona) {
         logger.info("Enviando campaña para persona: " + persona.getNombre() + ", edad: " + persona.getEdad());
         persona.setCampania("Campaña para menor de edad");
         return persona;
     }
+
     public KafkaData evalueAvailablesGroups(KafkaData kafkaData) {
         System.out.println("INGRESANDO A DROOLSS:: ");
         logger.info("Ingresando a adroos_" + kafkaData.getTags().getSource());
 
-        // Llamada a getAllAvailableGroups
+        // Llamada a GraphQL secuencial
         graphQLService.getAllAvailableGroups()
                 .doOnTerminate(() -> {
-                    // Después de que la consulta termine
                     System.out.println("Consulta de GraphQL terminada.");
                 })
                 .subscribe(response -> {
-                    // Procesar la respuesta
                     if (response != null && response.getData() != null) {
                         System.out.println("Grupos disponibles: " + response.getData().getGetAllAvailableGroups());
 
@@ -65,15 +64,14 @@ public class EventCorbaServiceImpl implements EventCorbaService {
     public void executeGetAllNetworkElementsByGroup(String group, KafkaData kafkaData) {
         graphQLService.getAllNetworkElementsByGroup(group)
                 .doOnTerminate(() -> {
-                    // Después de que la consulta termine
                     System.out.println("Consulta de GraphQL terminada.");
                 })
                 .subscribe(response -> {
                     if (response != null && response.getData() != null) {
                         System.out.println("Datos de la red obtenidos: " + response.getData().getAllNetworkElementsByGroup());
 
-                        // Buscar el elemento asociado al source de KafkaData
-                        String source = kafkaData.getTags().getSource(); // Obtener el source de KafkaData
+                        // Buscar el nombre asociado al source
+                        String source = kafkaData.getTags().getSource();
                         String name = findNameByManagementIp(source, response.getData().getAllNetworkElementsByGroup());
 
                         // Crear la lista de mensajes para KafkaRequest
@@ -112,11 +110,8 @@ public class EventCorbaServiceImpl implements EventCorbaService {
     @Autowired
     private KafkaProducerService kafkaProducerService;
 
-    public void enviarDatos(KafkaRequest kafkaDataList  ) {
+    public void enviarDatos(KafkaRequest kafkaDataList) {
         String topic = "opt-alert-drools";  // Especifica el tópico en el que deseas enviar los datos
         kafkaProducerService.sendMessage(topic, kafkaDataList);
     }
-
-
-
 }
