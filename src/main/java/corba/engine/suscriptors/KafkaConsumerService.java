@@ -68,10 +68,6 @@ public class KafkaConsumerService {
 
             List<KafkaData> kafkaDataList = objectMapper.readValue(avroJsonDeserializeTemp, objectMapper.getTypeFactory().constructCollectionType(List.class, KafkaData.class));
 
-            // Imprimir el resultado
-            for (KafkaData data : kafkaDataList) {
-                System.out.println(data);
-            }
             processKafkaData(kafkaDataList);
         } catch (JsonProcessingException e) {
             System.out.println("Error de procesamiento JSON: " + e);
@@ -117,10 +113,7 @@ public class KafkaConsumerService {
     }
     private void processKafkaData(List<KafkaData> data) {
         for (KafkaData dataEvaluar: data) {
-            Tags tags = dataEvaluar.getTags();
             ruleService.executeRulesWithEventKafka(dataEvaluar);
         }
-
-
     }
 }

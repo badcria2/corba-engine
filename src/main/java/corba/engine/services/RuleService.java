@@ -37,7 +37,6 @@ public class RuleService {
 
         int reglasEjecutadas = kieSession.fireAllRules();
         logger.info("Reglas ejecutadas: " + reglasEjecutadas + "   reglass");
-
         removePersonsFromSession();
     }
 
