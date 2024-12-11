@@ -37,6 +37,7 @@ public class GraphQLService {
                 .bodyToMono(GraphQLResponse.class)
                 .doOnNext(response -> logger.info("Respuesta GraphQL recibida: {}", response))
                 .onErrorResume(error -> {
+                    System.err.println("Error al consultar GraphQL: {}" +  error.getMessage() +  error);
                     logger.error("Error al consultar GraphQL: {}", error.getMessage(), error);
                     return Mono.error(new RuntimeException("Error al consultar GraphQL: " + error.getMessage()));
                 })
