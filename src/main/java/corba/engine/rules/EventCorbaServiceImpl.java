@@ -46,9 +46,8 @@ public class EventCorbaServiceImpl implements EventCorbaService {
 
         // Llamada a GraphQL secuencial
         graphQLService.getAllAvailableGroups()
-                .doOnTerminate(() -> {
-                    System.out.println("Consulta de GraphQL terminada.");
-                })
+                .doOnError(error -> logger.severe("Error al obtener grupos: " + error.getMessage()))
+                .doOnTerminate(() -> logger.info("Consulta GraphQL terminada"))
                 .subscribe(response -> {
                     if (response != null && response.getData() != null) {
                         System.out.println("Grupos disponibles: " + response.getData().getGetAllAvailableGroups());
