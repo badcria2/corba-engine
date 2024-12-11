@@ -94,14 +94,14 @@ public class KafkaConsumerService {
             String uniqueId = dataEvaluar.getTimestamp() + "-" + dataEvaluar.getTags().getComponentName();
 
             // Validar si el mensaje ya fue procesado
-            if (processedMessages.putIfAbsent(uniqueId, System.currentTimeMillis()) == null) {
+           // if (processedMessages.putIfAbsent(uniqueId, System.currentTimeMillis()) == null) {
                 ruleService.executeRulesWithEventKafka(dataEvaluar);
-            } else {
-               System.out.println("Mensaje duplicado detectado y descartado: " + uniqueId);
-            }
+           // } else {
+            //   System.out.println("Mensaje duplicado detectado y descartado: " + uniqueId);
+           // }
         }
 
-        cleanupOldMessages();
+        //cleanupOldMessages();
     }
 
     private void cleanupOldMessages() {
