@@ -1,14 +1,12 @@
 package corba.engine.suscriptors;
 
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import corba.engine.AvroDeserializer;
 import corba.engine.models.KafkaData;
-import corba.engine.models.Tags;
 import corba.engine.services.RuleService;
 import org.apache.avro.AvroRuntimeException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,45 +15,25 @@ import org.springframework.stereotype.Service;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class KafkaConsumerService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final RuleService ruleService;
     private String avroJsonDeserialize;
+
+    // Mapa para rastrear mensajes procesados con TTL
+    private final ConcurrentHashMap<String, Long> processedMessages = new ConcurrentHashMap<>();
+    private static final long TTL = TimeUnit.MINUTES.toMillis(5); // Tiempo para limpiar mensajes antiguos
+
     @Autowired
     public KafkaConsumerService(RuleService ruleService) {
-
         this.ruleService = ruleService;
         this.avroJsonDeserialize = "[ { \"name\" : \"default-1733336542\", \"timestamp\" : 1733347504252893801, \"tags\" : { \"component_name\" : \"och 1/2/c1\", \"source\" : \"10.95.90.87\", \"subscription-name\" : \"default-1733336542\" }, \"values\" : { \"/components/component/optical-channel/state/output-power/instant\" : \"-8.32\" } } ]";
-
     }
-   /*@KafkaListener(topics = "opt-term-inout-pwr", groupId = "mi-grupo-consumidor")
-    public void listen_opt_term_inout_pwr(String message) {
 
-        try {
-            // Preprocesar el JSON antes de deserializarlo
-            String avroJsonDeserializeTemp = preprocessJson(avroJsonDeserialize);
-
-            // Deserializar el JSON
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-
-            List<KafkaData> kafkaDataList = objectMapper.readValue(avroJsonDeserializeTemp, objectMapper.getTypeFactory().constructCollectionType(List.class, KafkaData.class));
-
-            // Imprimir el resultado
-            for (KafkaData data : kafkaDataList) {
-                System.out.println(data);
-            }
-            processKafkaData(kafkaDataList);
-        } catch (JsonProcessingException e) {
-            System.out.println("Error de procesamiento JSON: " + e);
-        }       catch (AvroRuntimeException e) {
-            System.out.println("Error al deserializar AVRO: " +  e);
-        } catch (Exception e) {
-            System.out.println("Error general procesando el mensaje: " + e);
-        }
-    }*/
     @KafkaListener(topics = "opt-term-target-out-pwr", groupId = "mi-grupo-consumidor")
     public void listen_opt_term_target_out_pwr(String message) {
         try {
@@ -63,20 +41,19 @@ public class KafkaConsumerService {
             String avroJsonDeserializeTemp = preprocessJson(avroJsonDeserialize);
 
             // Deserializar el JSON
-            ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-
             List<KafkaData> kafkaDataList = objectMapper.readValue(avroJsonDeserializeTemp, objectMapper.getTypeFactory().constructCollectionType(List.class, KafkaData.class));
 
             processKafkaData(kafkaDataList);
         } catch (JsonProcessingException e) {
             System.out.println("Error de procesamiento JSON: " + e);
-        }       catch (AvroRuntimeException e) {
-            System.out.println("Error al deserializar AVRO: " +  e);
+        } catch (AvroRuntimeException e) {
+            System.out.println("Error al deserializar AVRO: " + e);
         } catch (Exception e) {
             System.out.println("Error general procesando el mensaje: " + e);
         }
     }
+
     private static String preprocessJson(String json) throws Exception {
         // Crear un ObjectMapper
         ObjectMapper objectMapper = new ObjectMapper();
@@ -111,9 +88,51 @@ public class KafkaConsumerService {
             }
         }
     }
+
     private void processKafkaData(List<KafkaData> data) {
-        for (KafkaData dataEvaluar: data) {
-            ruleService.executeRulesWithEventKafka(dataEvaluar);
+        for (KafkaData dataEvaluar : data) {
+            String uniqueId = dataEvaluar.getTimestamp() + "-" + dataEvaluar.getTags().getComponentName();
+
+            // Validar si el mensaje ya fue procesado
+            if (processedMessages.putIfAbsent(uniqueId, System.currentTimeMillis()) == null) {
+                ruleService.executeRulesWithEventKafka(dataEvaluar);
+            } else {
+                System.out.println("Mensaje duplicado detectado y descartado: " + uniqueId);
+            }
         }
+
+        cleanupOldMessages();
+    }
+
+    private void cleanupOldMessages() {
+        long currentTime = System.currentTimeMillis();
+        processedMessages.entrySet().removeIf(entry -> currentTime - entry.getValue() > TTL);
     }
 }
+
+   /*@KafkaListener(topics = "opt-term-inout-pwr", groupId = "mi-grupo-consumidor")
+    public void listen_opt_term_inout_pwr(String message) {
+
+        try {
+            // Preprocesar el JSON antes de deserializarlo
+            String avroJsonDeserializeTemp = preprocessJson(avroJsonDeserialize);
+
+            // Deserializar el JSON
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+
+            List<KafkaData> kafkaDataList = objectMapper.readValue(avroJsonDeserializeTemp, objectMapper.getTypeFactory().constructCollectionType(List.class, KafkaData.class));
+
+            // Imprimir el resultado
+            for (KafkaData data : kafkaDataList) {
+                System.out.println(data);
+            }
+            processKafkaData(kafkaDataList);
+        } catch (JsonProcessingException e) {
+            System.out.println("Error de procesamiento JSON: " + e);
+        }       catch (AvroRuntimeException e) {
+            System.out.println("Error al deserializar AVRO: " +  e);
+        } catch (Exception e) {
+            System.out.println("Error general procesando el mensaje: " + e);
+        }
+    }*/
