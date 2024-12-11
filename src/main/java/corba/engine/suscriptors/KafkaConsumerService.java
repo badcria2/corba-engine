@@ -108,9 +108,7 @@ public class KafkaConsumerService {
         long currentTime = System.currentTimeMillis();
         processedMessages.entrySet().removeIf(entry -> currentTime - entry.getValue() > TTL);
     }
-}
-
-   /*@KafkaListener(topics = "opt-term-inout-pwr", groupId = "mi-grupo-consumidor")
+    @KafkaListener(topics = "opt-term-inout-pwr", groupId = "mi-grupo-consumidor")
     public void listen_opt_term_inout_pwr(String message) {
 
         try {
@@ -135,4 +133,7 @@ public class KafkaConsumerService {
         } catch (Exception e) {
             System.out.println("Error general procesando el mensaje: " + e);
         }
-    }*/
+    }
+}
+
+   /**/
