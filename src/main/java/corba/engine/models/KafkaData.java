@@ -6,6 +6,7 @@ import java.util.Map;
 // Getters y setters
 public class KafkaData {
     private String name;
+
     private long timestamp;
     private Tags tags;
     private Map<String, String> values;
@@ -43,5 +44,13 @@ public class KafkaData {
         this.values = values;
     }
 
-
+    @Override
+    public String toString() {
+        return "KafkaData{" +
+                "name='" + name + '\'' +
+                ", timestamp=" + timestamp +
+                ", tags=" + tags +
+                ", values=" + values +
+                '}';
+    }
 }

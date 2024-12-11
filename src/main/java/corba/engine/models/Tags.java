@@ -39,4 +39,13 @@ public class Tags {
         public void setSubscriptionName(String subscriptionName) {
             this.subscriptionName = subscriptionName;
         }
+
+    @Override
+    public String toString() {
+        return "Tags{" +
+                "componentName='" + componentName + '\'' +
+                ", source='" + source + '\'' +
+                ", subscriptionName='" + subscriptionName + '\'' +
+                '}';
+    }
 }
