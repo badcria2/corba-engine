@@ -18,12 +18,10 @@ import java.util.Map;
 public class EventCorbaServiceImpl implements EventCorbaService {
 
     private final GraphQLService graphQLService;
-    private final KafkaProducerService kafkaProducerService;
 
     @Autowired
-    public EventCorbaServiceImpl(GraphQLService graphQLService, KafkaProducerService kafkaProducerService) {
+    public EventCorbaServiceImpl(GraphQLService graphQLService) {
         this.graphQLService = graphQLService;
-        this.kafkaProducerService = kafkaProducerService;
     }
 
     @Override
