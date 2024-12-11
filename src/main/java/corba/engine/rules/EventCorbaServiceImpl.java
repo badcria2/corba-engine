@@ -41,24 +41,29 @@ public class EventCorbaServiceImpl implements EventCorbaService {
     }
 
     public KafkaData evalueAvailablesGroups(KafkaData kafkaData) {
-        System.out.println("INGRESANDO A DROOLSS:: ");
-        logger.info("Ingresando a adroos_" + kafkaData.getTags().getSource());
+        logger.info("Procesando KafkaData desde source: " + kafkaData.getTags().getSource());
 
-        // Llamada a GraphQL secuencial
         graphQLService.getAllAvailableGroups()
-                .doOnError(error -> logger.severe("Error al obtener grupos: " + error.getMessage()))
-                .doOnTerminate(() -> logger.info("Consulta GraphQL terminada"))
-                .subscribe(response -> {
-                    if (response != null && response.getData() != null) {
-                        System.out.println("Grupos disponibles: " + response.getData().getGetAllAvailableGroups());
-
-                        // Llamar al siguiente método con un grupo específico
-                        executeGetAllNetworkElementsByGroup(response.getData().getGetAllAvailableGroups().get(1), kafkaData);
+                .doOnError(error -> logger.severe("Error al consultar grupos disponibles: " + error.getMessage()))
+                .doOnNext(response -> {
+                    if (response != null && response.getData() != null && response.getData().getGetAllAvailableGroups() != null) {
+                        List<String> groups = response.getData().getGetAllAvailableGroups();
+                        if (!groups.isEmpty()) {
+                            logger.info("Grupos obtenidos: " + groups);
+                            executeGetAllNetworkElementsByGroup(groups.get(0), kafkaData);
+                        } else {
+                            logger.warning("No se encontraron grupos disponibles en la respuesta.");
+                        }
+                    } else {
+                        logger.warning("Respuesta de GraphQL nula o sin datos.");
                     }
-                });
+                })
+                .doOnTerminate(() -> logger.info("Finalizó la consulta de grupos."))
+                .subscribe();
 
         return kafkaData;
     }
+
 
     public void executeGetAllNetworkElementsByGroup(String group, KafkaData kafkaData) {
         graphQLService.getAllNetworkElementsByGroup(group)
