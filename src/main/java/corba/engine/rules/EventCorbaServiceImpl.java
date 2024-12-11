@@ -62,7 +62,7 @@ public class EventCorbaServiceImpl implements EventCorbaService {
         return kafkaData;
     }
 
-    private void executeGetAllNetworkElementsByGroup(String group, KafkaData kafkaData) {
+    public void executeGetAllNetworkElementsByGroup(String group, KafkaData kafkaData) {
         graphQLService.getAllNetworkElementsByGroup(group)
                 .doOnTerminate(() -> {
                     // Después de que la consulta termine
@@ -76,7 +76,7 @@ public class EventCorbaServiceImpl implements EventCorbaService {
                         String source = kafkaData.getTags().getSource(); // Obtener el source de KafkaData
                         String name = findNameByManagementIp(source, response.getData().getAllNetworkElementsByGroup());
 
-                        // Construir la lista de mensajes para KafkaRequest
+                        // Crear la lista de mensajes para KafkaRequest
                         List<Map<String, Object>> messages = new ArrayList<>();
                         Map<String, Object> message = new HashMap<>();
 
@@ -92,12 +92,13 @@ public class EventCorbaServiceImpl implements EventCorbaService {
 
                         // Crear KafkaRequest y enviarlo
                         KafkaRequest kafkaRequest = new KafkaRequest(messages);
-                        kafkaProducerService.sendMessage("nombre_del_topico", kafkaRequest);
+                        kafkaProducerService.sendMessage("opt-alert-drools", kafkaRequest);
 
                         System.out.println("Mensaje enviado: " + kafkaRequest);
                     }
                 });
     }
+
     // Método para buscar el nombre basado en la IP de gestión
     private String findNameByManagementIp(String source, List<NetworkElement> elements) {
         for (NetworkElement element : elements) {
