@@ -62,7 +62,7 @@ public class DroolsConfiguration {
         contentBuilder.append("     tags : Tags").append("\n");
         contentBuilder.append("     values : Map").append("\n");
         contentBuilder.append("     name  : String").append("\n");
-        contentBuilder.append("     timestamp   : Long").append("\n");
+        contentBuilder.append("     timestamp   : long").append("\n");
         contentBuilder.append("end").append("\n");
 
         contentBuilder.append("rule \"").append(rule.getName()).append("\"\n");
