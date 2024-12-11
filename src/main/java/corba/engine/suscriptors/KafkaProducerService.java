@@ -23,7 +23,7 @@ public class KafkaProducerService {
     public static void sendMessageToKafka(String topic, String message) {
         // Configuración del productor de Kafka
         Properties properties = new Properties();
-        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092"); // Dirección de tu servidor Kafka
+        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "10.95.90.65:9091,10.95.90.65:9092");
         properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
         properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
