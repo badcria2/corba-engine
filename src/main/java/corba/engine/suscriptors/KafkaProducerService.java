@@ -19,7 +19,7 @@ import java.util.concurrent.ExecutionException;
 @Service
 public class KafkaProducerService {
 
-    @Value("${kafka.bootstrap.servers}")
+    @Value("${kafka.bootstrap.servers:localhost:9092}")
     private String bootstrapServers; // Dirección del broker Kafka
 
     private final ObjectMapper objectMapper = new ObjectMapper();
