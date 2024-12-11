@@ -9,110 +9,110 @@ import corba.engine.suscriptors.KafkaProducerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 @Service
 public class EventCorbaServiceImpl implements EventCorbaService {
+
     private final GraphQLService graphQLService;
     private final KafkaProducerService kafkaProducerService;
 
-    private static final Logger logger = Logger.getLogger(EventCorbaServiceImpl.class.getName());
     @Autowired
     public EventCorbaServiceImpl(GraphQLService graphQLService, KafkaProducerService kafkaProducerService) {
         this.graphQLService = graphQLService;
         this.kafkaProducerService = kafkaProducerService;
     }
+
     @Override
     public Persona enviarcampania(Persona persona) {
-
-        logger.info("Enviando campaña para persona: " + persona.getNombre() + ", edad: " + persona.getEdad());
+        System.out.println("Enviando campaña para persona: " + persona.getNombre() + ", edad: " + persona.getEdad());
         persona.setCampania("Campaña para mayores de edad");
         return persona;
     }
-    public Persona enviarcampaniaMenor(Persona persona) {
 
-        logger.info("Enviando campaña para persona: " + persona.getNombre() + ", edad: " + persona.getEdad());
+    public Persona enviarcampaniaMenor(Persona persona) {
+        System.out.println("Enviando campaña para persona: " + persona.getNombre() + ", edad: " + persona.getEdad());
         persona.setCampania("Campaña para menor de edad");
         return persona;
     }
+
     public KafkaData evalueAvailablesGroups(KafkaData kafkaData) {
-        System.out.println("INGRESANDO A DROOLSS:: ");
-        logger.info("Ingresando a adroos_" + kafkaData.getTags().getSource());
+        System.out.println("Procesando grupos disponibles para KafkaData: " + kafkaData.getTags().getSource());
 
-        // Llamada a getAllAvailableGroups
         graphQLService.getAllAvailableGroups()
-                .doOnTerminate(() -> {
-                    // Después de que la consulta termine
-                    System.out.println("Consulta de GraphQL terminada.");
-                })
+                .doOnTerminate(() -> System.out.println("Consulta de grupos disponibles finalizada."))
                 .subscribe(response -> {
-                    // Procesar la respuesta
                     if (response != null && response.getData() != null) {
-                        System.out.println("Grupos disponibles: " + response.getData().getGetAllAvailableGroups());
+                        List<String> availableGroups = response.getData().getGetAllAvailableGroups();
+                        System.out.println("Grupos disponibles obtenidos: " + availableGroups);
 
-                        // Llamar al siguiente método con un grupo específico
-                        executeGetAllNetworkElementsByGroup(response.getData().getGetAllAvailableGroups().get(1), kafkaData);
+                        if (!availableGroups.isEmpty()) {
+                            executeGetAllNetworkElementsByGroup(availableGroups.get(1), kafkaData);
+                        } else {
+                            System.out.println("No se encontraron grupos disponibles.");
+                        }
                     }
-                });
+                }, error -> System.out.println("Error al obtener grupos disponibles: " + error));
 
         return kafkaData;
     }
 
     private void executeGetAllNetworkElementsByGroup(String group, KafkaData kafkaData) {
+        System.out.println("Procesando elementos de red para el grupo: " + group);
+
         graphQLService.getAllNetworkElementsByGroup(group)
-                .doOnTerminate(() -> {
-                    // Después de que la consulta termine
-                    System.out.println("Consulta de GraphQL terminada.");
-                })
+                .doOnTerminate(() -> System.out.println("Consulta de elementos de red finalizada para el grupo: " + group))
                 .subscribe(response -> {
-                    // Procesar la respuesta
                     if (response != null && response.getData() != null) {
-                        System.out.println("Datos de la red obtenidos: " + response.getData().getAllNetworkElementsByGroup());
+                        List<NetworkElement> networkElements = response.getData().getAllNetworkElementsByGroup();
+                        System.out.println("Elementos de red obtenidos: " + networkElements);
 
-                        // Buscar el elemento asociado al source de KafkaData
-                        String source = kafkaData.getTags().getSource(); // Obtener el source de KafkaData
-                        String name = findNameByManagementIp(source, response.getData().getAllNetworkElementsByGroup());
-
-                        if (name != null) {
-                            System.out.println("El nombre asociado al source " + source + " es: " + name);
-                            // Crear la lista de mensajes para KafkaRequest
-                            List<Map<String, Object>> messages = new ArrayList<>();
-                            Map<String, Object> message = new HashMap<>();
-
-                            if (name != null) {
-                                message.put("source", source);
-                                message.put("message", "El nombre asociado al source " + source + " es: " + name);
-                            } else {
-                                message.put("source", source);
-                                message.put("message", "No se encontró un nombre asociado al source " + source);
-                            }
-
-                            messages.add(message);
-                            // Crear KafkaRequest y enviarlo
-                            KafkaRequest kafkaRequest = new KafkaRequest(messages);
-                            kafkaProducerService.sendMessage("opt-alert-drools", kafkaRequest);
-                        } else {
-                            System.out.println("No se encontró un nombre asociado al source " + source);
-                        }
+                        processAndSendToKafka(kafkaData, networkElements);
+                    } else {
+                        System.out.println("No se obtuvieron datos de la red para el grupo: " + group);
                     }
-                });
+                }, error -> System.out.println("Error al obtener elementos de red para el grupo: " + group + " - " + error));
     }
 
-    // Método para buscar el nombre basado en la IP de gestión
+    private void processAndSendToKafka(KafkaData kafkaData, List<NetworkElement> networkElements) {
+        String source = kafkaData.getTags().getSource();
+        String name = findNameByManagementIp(source, networkElements);
+
+        List<Map<String, Object>> messages = new ArrayList<>();
+        Map<String, Object> message = new HashMap<>();
+
+        if (name != null) {
+            message.put("source", source);
+            message.put("message", "El nombre asociado al source " + source + " es: " + name);
+            System.out.println("Nombre encontrado para el source " + source + ": " + name);
+        } else {
+            message.put("source", source);
+            message.put("message", "No se encontró un nombre asociado al source " + source);
+            System.out.println("No se encontró un nombre asociado al source: " + source);
+        }
+
+        messages.add(message);
+        sendMessageToKafka(new KafkaRequest(messages));
+    }
+
+    private void sendMessageToKafka(KafkaRequest kafkaRequest) {
+        try {
+            kafkaProducerService.sendMessage("opt-alert-drools", kafkaRequest);
+            System.out.println("Mensaje enviado a Kafka: " + kafkaRequest);
+        } catch (Exception e) {
+            System.out.println("Error al enviar mensaje a Kafka: " + e);
+        }
+    }
+
     private String findNameByManagementIp(String source, List<NetworkElement> elements) {
         for (NetworkElement element : elements) {
             if (source.equals(element.getManagementIp())) {
                 return element.getName();
             }
         }
-        return null; // Si no se encuentra la IP, retorna null
+        return null;
     }
-
-
-
 }
