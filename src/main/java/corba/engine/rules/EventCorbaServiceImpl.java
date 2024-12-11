@@ -64,13 +64,15 @@ public class EventCorbaServiceImpl implements EventCorbaService {
         System.out.println("Procesando elementos de red para el grupo: " + group);
 
         graphQLService.getAllNetworkElementsByGroup(group)
-                .doOnTerminate(() -> System.out.println("Consulta de elementos de red finalizada para el grupo: " + group))
+                .doOnTerminate(() ->
+                        System.out.println("Consulta de elementos de red finalizada para el grupo: " + group) )
                 .subscribe(response -> {
                     if (response != null && response.getData() != null) {
                         List<NetworkElement> networkElements = response.getData().getAllNetworkElementsByGroup();
                         System.out.println("Elementos de red obtenidos: " + networkElements);
-
-                        //processAndSendToKafka(kafkaData, networkElements);
+                        String source = kafkaData.getTags().getSource();
+                        String name = findNameByManagementIp(source, networkElements);
+                        sendMessageToKafka("El nombre asociado al source "+ source + " es : " + name);
                     } else {
                         System.out.println("No se obtuvieron datos de la red para el grupo: " + group);
                     }
@@ -81,7 +83,7 @@ public class EventCorbaServiceImpl implements EventCorbaService {
         String source = kafkaData.getTags().getSource();
         String name = findNameByManagementIp(source, networkElements);
 
-        List<Map<String, Object>> messages = new ArrayList<>();
+       /* List<Map<String, Object>> messages = new ArrayList<>();
         Map<String, Object> message = new HashMap<>();
 
         if (name != null) {
@@ -92,15 +94,15 @@ public class EventCorbaServiceImpl implements EventCorbaService {
             message.put("source", source);
             message.put("message", "No se encontró un nombre asociado al source " + source);
             System.out.println("No se encontró un nombre asociado al source: " + source);
-        }
+        }*/
 
-        messages.add(message);
-        sendMessageToKafka(new KafkaRequest(messages));
+        //messages.add(message);
+        //sendMessageToKafka(new KafkaRequest(messages));
     }
 
-    private void sendMessageToKafka(KafkaRequest kafkaRequest) {
+    private void sendMessageToKafka(String kafkaRequest) {
         try {
-            kafkaProducerService.sendMessage("opt-alert-drools", kafkaRequest);
+            KafkaProducerService.sendMessageToKafka("test-topic", kafkaRequest);
             System.out.println("Mensaje enviado a Kafka: " + kafkaRequest);
         } catch (Exception e) {
             System.out.println("Error al enviar mensaje a Kafka: " + e);
