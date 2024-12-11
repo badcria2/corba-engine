@@ -1,7 +1,10 @@
 package corba.engine.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import corba.engine.models.KafkaData;
 import corba.engine.response.GraphQLResponse;
+import corba.engine.suscriptors.KafkaProducerService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -9,6 +12,8 @@ import reactor.core.publisher.Mono;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Service
 public class GraphQLService {

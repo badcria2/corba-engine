@@ -119,14 +119,6 @@ public class KafkaConsumerService {
         for (KafkaData dataEvaluar: data) {
             Tags tags = dataEvaluar.getTags();
             ruleService.executeRulesWithEventKafka(dataEvaluar);
-
-            System.out.println("Datos transformados: ");
-            System.out.println("Nombre: " + dataEvaluar.getName());
-            System.out.println("Timestamp: " + dataEvaluar.getTimestamp());
-            System.out.println("Componente: " + tags.getComponentName());
-            System.out.println("Source: " + tags.getSource());
-            System.out.println("Subscription Name: " + tags.getSubscriptionName());
-            System.out.println("Values: " + dataEvaluar.getValues());
         }
 
 

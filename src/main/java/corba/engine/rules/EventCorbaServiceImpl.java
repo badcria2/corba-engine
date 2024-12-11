@@ -1,15 +1,20 @@
 package corba.engine.rules;
 
 import corba.engine.models.KafkaData;
+import corba.engine.request.KafkaRequest;
 import corba.engine.response.NetworkElement;
 import corba.engine.models.Persona;
 import corba.engine.models.Tags;
 import corba.engine.services.GraphQLService;
+import corba.engine.suscriptors.KafkaProducerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 @Service
@@ -64,7 +69,6 @@ public class EventCorbaServiceImpl implements EventCorbaService {
                     System.out.println("Consulta de GraphQL terminada.");
                 })
                 .subscribe(response -> {
-                    // Procesar la respuesta
                     if (response != null && response.getData() != null) {
                         System.out.println("Datos de la red obtenidos: " + response.getData().getAllNetworkElementsByGroup());
 
@@ -72,15 +76,28 @@ public class EventCorbaServiceImpl implements EventCorbaService {
                         String source = kafkaData.getTags().getSource(); // Obtener el source de KafkaData
                         String name = findNameByManagementIp(source, response.getData().getAllNetworkElementsByGroup());
 
+                        // Construir la lista de mensajes para KafkaRequest
+                        List<Map<String, Object>> messages = new ArrayList<>();
+                        Map<String, Object> message = new HashMap<>();
+
                         if (name != null) {
-                            System.out.println("El nombre asociado al source " + source + " es: " + name);
+                            message.put("source", source);
+                            message.put("message", "El nombre asociado al source " + source + " es: " + name);
                         } else {
-                            System.out.println("No se encontró un nombre asociado al source " + source);
+                            message.put("source", source);
+                            message.put("message", "No se encontró un nombre asociado al source " + source);
                         }
+
+                        messages.add(message);
+
+                        // Crear KafkaRequest y enviarlo
+                        KafkaRequest kafkaRequest = new KafkaRequest(messages);
+                        kafkaProducerService.sendMessage("nombre_del_topico", kafkaRequest);
+
+                        System.out.println("Mensaje enviado: " + kafkaRequest);
                     }
                 });
     }
-
     // Método para buscar el nombre basado en la IP de gestión
     private String findNameByManagementIp(String source, List<NetworkElement> elements) {
         for (NetworkElement element : elements) {
@@ -89,6 +106,14 @@ public class EventCorbaServiceImpl implements EventCorbaService {
             }
         }
         return null; // Si no se encuentra la IP, retorna null
+    }
+
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
+
+    public void enviarDatos(KafkaRequest kafkaDataList  ) {
+        String topic = "opt-alert-drools";  // Especifica el tópico en el que deseas enviar los datos
+        kafkaProducerService.sendMessage(topic, kafkaDataList);
     }
 
 
