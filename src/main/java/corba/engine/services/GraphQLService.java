@@ -3,57 +3,56 @@ package corba.engine.services;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import corba.engine.models.KafkaData;
 import corba.engine.response.GraphQLResponse;
-import corba.engine.suscriptors.KafkaProducerService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.ClientResponse;
-import reactor.core.publisher.Mono;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
-import java.util.List;
+import java.time.Duration;
 
 @Service
 public class GraphQLService {
 
+    private static final Logger logger = LoggerFactory.getLogger(GraphQLService.class);
+    private static final String CONTENT_TYPE = "application/json";
     private final WebClient webClient;
 
     // Constructor que inicializa WebClient con la URL base
-    public GraphQLService(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl("http://10.95.90.64:10000/oc/graphql").build();
+    public GraphQLService(WebClient.Builder webClientBuilder, @Value("${graphql.endpoint:http://10.95.90.64:10000/oc/graphql}") String baseUrl) {
+        this.webClient = webClientBuilder.baseUrl(baseUrl).build();
+        logger.info("GraphQLService inicializado con URL base: {}", baseUrl);
     }
 
-    // Método que consulta los grupos disponibles
+    // Método genérico para realizar consultas GraphQL
+    private Mono<GraphQLResponse> executeQuery(String query) {
+        logger.debug("Ejecutando consulta GraphQL: {}", query);
+
+        return webClient.post()
+                .header("Content-Type", CONTENT_TYPE)
+                .bodyValue("{\"query\":\"" + query + "\"}")
+                .retrieve()
+                .bodyToMono(GraphQLResponse.class)
+                .doOnNext(response -> logger.info("Respuesta GraphQL recibida: {}", response))
+                .onErrorResume(error -> {
+                    logger.error("Error al consultar GraphQL: {}", error.getMessage(), error);
+                    return Mono.error(new RuntimeException("Error al consultar GraphQL: " + error.getMessage()));
+                })
+                .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2))
+                        .doBeforeRetry(retrySignal -> logger.warn("Reintentando consulta GraphQL. Intento: {}", retrySignal.totalRetries() + 1)));
+    }
+
+    // Método para consultar todos los grupos disponibles
     public Mono<GraphQLResponse> getAllAvailableGroups() {
         String query = "{ getAllAvailableGroups }";
-
-        // Realiza la consulta GraphQL y mapea la respuesta a GraphQLResponse
-        return webClient.post()
-                .bodyValue("{\"query\":\"" + query + "\"}")
-                .header("Content-Type", "application/json")
-                .retrieve()
-                .bodyToMono(GraphQLResponse.class)  // Mapea la respuesta a la clase GraphQLResponse
-                .onErrorResume(error -> Mono.error(new RuntimeException("Error al consultar GraphQL: " + error.getMessage())));
+        return executeQuery(query);
     }
 
+    // Método para consultar elementos de red por grupo
     public Mono<GraphQLResponse> getAllNetworkElementsByGroup(String group) {
-        String query = String.format("query MyQuery { getAllNetworkElementsByGroup(group: \\\"%s\\\") }", group);
-
-
-        return webClient.post()
-                .header("Content-Type", "application/json")
-                .bodyValue("{\"query\":\"" + query + "\"}")
-                .retrieve()
-                .bodyToMono(GraphQLResponse.class)  // Deserializa directamente a GraphQLResponse
-                .doOnNext(json -> System.out.println("Respuesta GraphQL: " + json)) // Log de la respuesta
-                .doOnNext(response -> {
-                    // Si necesitas imprimir la respuesta para depuración
-                    System.out.println("Respuesta GraphQL: " + response);
-                })
-                .onErrorResume(error -> Mono.error(new RuntimeException("Error al consultar GraphQL: " + error.getMessage())));
+        String query = String.format("query { getAllNetworkElementsByGroup(group: \\\"%s\\\") }", group);
+        return executeQuery(query);
     }
-
-
 }
