@@ -58,6 +58,11 @@ public class DroolsConfiguration {
             contentBuilder.append("import ").append(importLine).append(";\n");
         }
 
+        contentBuilder.append("declare KafkaData");
+        contentBuilder.append("     tags : Tags");
+        contentBuilder.append("     values : Map");
+        contentBuilder.append("end");
+
         contentBuilder.append("rule \"").append(rule.getName()).append("\"\n");
         contentBuilder.append("  when\n");
 
