@@ -70,7 +70,7 @@ public class EventCorbaServiceImpl implements EventCorbaService {
                         List<NetworkElement> networkElements = response.getData().getAllNetworkElementsByGroup();
                         System.out.println("Elementos de red obtenidos: " + networkElements);
 
-                        processAndSendToKafka(kafkaData, networkElements);
+                        //processAndSendToKafka(kafkaData, networkElements);
                     } else {
                         System.out.println("No se obtuvieron datos de la red para el grupo: " + group);
                     }
