@@ -81,7 +81,7 @@ public class EventCorbaServiceImpl implements EventCorbaService {
                         if (name != null) {
                             System.out.println("El nombre asociado al source " + source + " es: " + name);
                             // Crear la lista de mensajes para KafkaRequest
-                            List<Map<String, Object>> messages = new ArrayList<>();
+                            /*List<Map<String, Object>> messages = new ArrayList<>();
                             Map<String, Object> message = new HashMap<>();
 
                             if (name != null) {
@@ -95,7 +95,7 @@ public class EventCorbaServiceImpl implements EventCorbaService {
                             messages.add(message);
                             // Crear KafkaRequest y enviarlo
                             KafkaRequest kafkaRequest = new KafkaRequest(messages);
-                            kafkaProducerService.sendMessage("opt-alert-drools", kafkaRequest);
+                            kafkaProducerService.sendMessage("opt-alert-drools", kafkaRequest);*/
                         } else {
                             System.out.println("No se encontró un nombre asociado al source " + source);
                         }
