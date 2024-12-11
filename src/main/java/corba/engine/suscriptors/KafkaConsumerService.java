@@ -30,7 +30,7 @@ public class KafkaConsumerService {
         this.avroJsonDeserialize = "[ { \"name\" : \"default-1733336542\", \"timestamp\" : 1733347504252893801, \"tags\" : { \"component_name\" : \"och 1/2/c1\", \"source\" : \"10.95.90.87\", \"subscription-name\" : \"default-1733336542\" }, \"values\" : { \"/components/component/optical-channel/state/output-power/instant\" : \"-8.32\" } } ]";
 
     }
-    @KafkaListener(topics = "opt-term-inout-pwr", groupId = "mi-grupo-consumidor")
+   /*@KafkaListener(topics = "opt-term-inout-pwr", groupId = "mi-grupo-consumidor")
     public void listen_opt_term_inout_pwr(String message) {
 
         try {
@@ -55,7 +55,7 @@ public class KafkaConsumerService {
         } catch (Exception e) {
             System.out.println("Error general procesando el mensaje: " + e);
         }
-    }
+    }*/
     @KafkaListener(topics = "opt-term-target-out-pwr", groupId = "mi-grupo-consumidor")
     public void listen_opt_term_target_out_pwr(String message) {
         try {
