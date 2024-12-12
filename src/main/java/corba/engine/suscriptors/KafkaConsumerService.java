@@ -38,7 +38,7 @@ public class KafkaConsumerService {
     public void listen_opt_term_target_out_pwr(String message) {
         try {
             // Preprocesar el JSON antes de deserializarlo
-            String avroJsonDeserializeTemp = preprocessJson(avroJsonDeserialize);
+            String avroJsonDeserializeTemp = preprocessJson(message);
 
             // Deserializar el JSON
             objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
