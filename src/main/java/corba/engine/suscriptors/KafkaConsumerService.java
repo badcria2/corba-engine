@@ -96,7 +96,7 @@ public class KafkaConsumerService {
             // Validar si el mensaje ya fue procesado
            // if (processedMessages.putIfAbsent(uniqueId, System.currentTimeMillis()) == null) {
             System.out.println("Data a evaluar:" + dataEvaluar.toString());
-                ruleService.executeRulesWithEventKafka(dataEvaluar);
+            ruleService.executeRulesWithEventKafka(dataEvaluar);
            // } else {
             //   System.out.println("Mensaje duplicado detectado y descartado: " + uniqueId);
            // }

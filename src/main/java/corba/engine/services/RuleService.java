@@ -35,6 +35,8 @@ public class RuleService {
         kieSession.insert(kafkaData);
         kieSession.insert(actionService); // Insert the service if needed in the rules
 
+        Double dato = new Double( Double.parseDouble(kafkaData.getValues().get("/components/component/optical-channel/state/target-output-power\\")));
+        System.out.println(" Dato Valor double :: " + dato);
         int reglasEjecutadas = kieSession.fireAllRules();
         logger.info("Reglas ejecutadas: " + reglasEjecutadas + "   reglass");
         removePersonsFromSession();

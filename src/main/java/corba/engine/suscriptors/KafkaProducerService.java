@@ -25,7 +25,6 @@ public class KafkaProducerService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public void sendMessage(String topic, KafkaRequest kafkaDataList) {
-        System.out.println("ACA ANDAMOS");
         // Verificar o crear el tópico
         ensureTopicExists(topic);
 
