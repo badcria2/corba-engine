@@ -34,13 +34,13 @@ public class RuleService {
         logger.info("Ejecutando reglas...");
         kieSession.insert(kafkaData);
         kieSession.insert(actionService); // Insert the service if needed in the rules
-
-        Double dato = new Double( Double.parseDouble(kafkaData.getValues().get("/components/component/optical-channel/state/target-output-power\\")));
-        System.out.println(" Dato Valor double :: " + dato);
+        System.out.println("VALOR INCRUSTADO: : " + kafkaData.getTargetOutputPower());
         int reglasEjecutadas = kieSession.fireAllRules();
         logger.info("Reglas ejecutadas: " + reglasEjecutadas + "   reglass");
         removePersonsFromSession();
     }
+
+
 
     private void removePersonsFromSession() {
         // Agrega registros de depuración para verificar los hechos antes de eliminarlos de la sesión

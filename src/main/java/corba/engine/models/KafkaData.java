@@ -43,7 +43,17 @@ public class KafkaData {
     public void setValues(Map<String, String> values) {
         this.values = values;
     }
-
+    public Double getTargetOutputPower() {
+        String valueStr = values.get("/components/component/optical-channel/state/target-output-power");
+        if (valueStr != null) {
+            try {
+                return Double.parseDouble(valueStr);
+            } catch (NumberFormatException e) {
+                return null; // Devuelve null si no se puede convertir
+            }
+        }
+        return null; // Devuelve null si no existe el valor
+    }
     @Override
     public String toString() {
         return "KafkaData{" +
