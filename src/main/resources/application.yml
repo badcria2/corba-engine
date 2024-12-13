@@ -7,6 +7,7 @@ spring:
     consumer:
       group-id: mi-grupo-consumidor
       auto-offset-reset: latest
+      enable-auto-commit: true
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   webflux:
