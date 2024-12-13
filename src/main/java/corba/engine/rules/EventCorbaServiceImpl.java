@@ -2,6 +2,7 @@ package corba.engine.rules;
 
 import corba.engine.models.KafkaData;
 import corba.engine.request.KafkaRequest;
+import corba.engine.request.TagsRequest;
 import corba.engine.response.NetworkElement;
 import corba.engine.models.Persona;
 import corba.engine.services.GraphQLService;
@@ -94,9 +95,24 @@ public class EventCorbaServiceImpl implements EventCorbaService {
             message.put("message", "No se encontró un nombre asociado al source " + source);
             System.out.println("No se encontró un nombre asociado al source: " + source);
         }
+        message.put("neName",name);
+        message.put("neIP",source);
+        message.put("component_name", "");
+        message.put("xpath", "/components/component/optical-channel/state/target-output-power");
+        message.put("xpath-value", kafkaData.getTargetOutputPower());
+        message.put("message", "target-output-power than " + kafkaData.getTargetOutputPower());
 
         messages.add(message);
-        sendMessageToKafka(new KafkaRequest(messages));
+
+        KafkaRequest kafkaRequest = new KafkaRequest();
+        kafkaRequest.setName(kafkaData.getName());
+        kafkaRequest.setTimestamp(kafkaData.getTimestamp());
+        TagsRequest tags =  new TagsRequest();
+        tags.setSource(source);
+        tags.setRuleName("Regla ejecutada por drools");
+
+        kafkaRequest.setValues(messages);
+        sendMessageToKafka(kafkaRequest);
     }
 
     private void sendMessageToKafka(KafkaRequest kafkaRequest) {

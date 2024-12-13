@@ -4,27 +4,51 @@ import java.util.List;
 import java.util.Map;
 
 public class KafkaRequest {
-    private List<Map<String, Object>> messages;
+    private String name;
+    private long timestamp;
+    private TagsRequest tags;
+    private List<Map<String, Object>> values;
 
-    public KafkaRequest() {
+    // Getters y Setters
+    public String getName() {
+        return name;
     }
 
-    public KafkaRequest(List<Map<String, Object>> messages) {
-        this.messages = messages;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public List<Map<String, Object>> getMessages() {
-        return messages;
+    public long getTimestamp() {
+        return timestamp;
     }
 
-    public void setMessages(List<Map<String, Object>> messages) {
-        this.messages = messages;
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public TagsRequest getTags() {
+        return tags;
+    }
+
+    public void setTags(TagsRequest tags) {
+        this.tags = tags;
+    }
+
+    public List<Map<String, Object>> getValues() {
+        return values;
+    }
+
+    public void setValues(List<Map<String, Object>> values) {
+        this.values = values;
     }
 
     @Override
     public String toString() {
         return "KafkaRequest{" +
-                "messages=" + messages +
+                "name='" + name + '\'' +
+                ", timestamp=" + timestamp +
+                ", tags=" + tags +
+                ", values=" + values +
                 '}';
     }
 }

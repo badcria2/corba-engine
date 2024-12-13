@@ -64,12 +64,10 @@ public class KafkaProducerService {
 
     private void ensureTopicExists(String topic) {
 
-        System.out.println("ACA ANDAMOS2");
         // Configuración del AdminClient
         Properties properties = new Properties();
         properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 
-        System.out.println("ACA ANDAMOS2");
         try (AdminClient adminClient = AdminClient.create(properties)) {
             // Obtener la lista de tópicos existentes
             Set<String> topics = adminClient.listTopics().names().get();
