@@ -97,7 +97,7 @@ public class EventCorbaServiceImpl implements EventCorbaService {
         }
         message.put("neName",name);
         message.put("neIP",source);
-        message.put("component_name", "");
+        message.put("component_name",kafkaData.getTags().getComponentName());
         message.put("xpath", "/components/component/optical-channel/state/target-output-power");
         message.put("xpath-value", kafkaData.getTargetOutputPower());
         message.put("message", "target-output-power than " + kafkaData.getTargetOutputPower());
@@ -110,7 +110,7 @@ public class EventCorbaServiceImpl implements EventCorbaService {
         TagsRequest tags =  new TagsRequest();
         tags.setSource(source);
         tags.setRuleName("Regla ejecutada por drools");
-
+        kafkaRequest.setTags(tags);
         kafkaRequest.setValues(messages);
         sendMessageToKafka(kafkaRequest);
     }
