@@ -95,22 +95,26 @@ public class EventCorbaServiceImpl implements EventCorbaService {
             message.put("message", "No se encontró un nombre asociado al source " + source);
             System.out.println("No se encontró un nombre asociado al source: " + source);
         }
-        message.put("neName",name);
+
         message.put("neIP",source);
+        message.put("neName",name);
         message.put("component_name",kafkaData.getTags().getComponentName());
         message.put("xpath", "/components/component/optical-channel/state/target-output-power");
         message.put("xpath-value", kafkaData.getTargetOutputPower());
-        message.put("message", "target-output-power than " + kafkaData.getTargetOutputPower());
+        message.put("message", "target-output-power is equal or higher than " + kafkaData.getTargetOutputPower());
 
         messages.add(message);
 
         KafkaRequest kafkaRequest = new KafkaRequest();
         kafkaRequest.setName(kafkaData.getName());
         kafkaRequest.setTimestamp(kafkaData.getTimestamp());
+
         TagsRequest tags =  new TagsRequest();
         tags.setSource(source);
-        tags.setRuleName("Regla ejecutada por drools");
+        tags.setRuleName("oc-opt-term_OPT-CHAN_target-output-power_HIGH");
         kafkaRequest.setTags(tags);
+
+
         kafkaRequest.setValues(messages);
         sendMessageToKafka(kafkaRequest);
     }
