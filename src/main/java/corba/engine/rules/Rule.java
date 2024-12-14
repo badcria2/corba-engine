@@ -12,6 +12,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Document(collection = "drools_rules")
 public class Rule {
 
     @Id
@@ -24,4 +25,15 @@ public class Rule {
 
     private List<String> actions;
 
+    @Override
+    public String toString() {
+        return "Rule{" +
+                "id='" + id + '\'' +
+                ", packageName='" + packageName + '\'' +
+                ", imports=" + imports +
+                ", name='" + name + '\'' +
+                ", conditions=" + conditions +
+                ", actions=" + actions +
+                '}';
+    }
 }

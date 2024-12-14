@@ -1,32 +1,70 @@
 package corba.engine.controller;
 
 import corba.engine.models.Persona;
+import corba.engine.rules.Rule;
 import corba.engine.services.RuleService;
+import corba.engine.services.RuleServiceMaintenance;
+import org.kie.api.runtime.KieSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.logging.Logger;
 
 @RestController
+@RequestMapping("/rules")
 public class RuleController {
     private static final Logger logger = Logger.getLogger(RuleController.class.getName());
 
-    private final RuleService ruleService;
+    private final RuleServiceMaintenance ruleService;
+    private final RuleService ruleServicePerson ;
 
     @Autowired
-    public RuleController(RuleService ruleService) {
+    public RuleController(RuleServiceMaintenance ruleService, RuleService ruleServicePerson) {
         this.ruleService = ruleService;
+        this.ruleServicePerson = ruleServicePerson;
     }
-
     @PostMapping("/validar-edad")
     public @ResponseBody Persona validarEdad(@RequestBody Persona persona) {
         logger.info("Persona recibida para validar edad: " + persona);
-        ruleService.executeRulesWithPerson(persona);
+        ruleServicePerson.executeRulesWithPerson(persona);
         return persona;
     }
 
+    @PostMapping
+    public ResponseEntity<Rule> createRule(@RequestBody Rule rule) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ruleService.createRule(rule));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Rule>> getAllRules() {
+        return ResponseEntity.ok(ruleService.getAllRules());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Rule> getRuleById(@PathVariable String id) {
+        return ruleService.getRuleById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Rule> updateRule(@PathVariable String id, @RequestBody Rule rule) {
+        return ResponseEntity.ok(ruleService.updateRule(id, rule));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRule(@PathVariable String id) {
+        ruleService.deleteRule(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Rule>> searchRulesByName(@RequestParam String pattern) {
+        List<Rule> rules = ruleService.searchRulesByNamePattern(".*" + pattern + ".*");
+        return ResponseEntity.ok(rules);
+    }
 
 }
