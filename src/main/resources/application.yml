@@ -1,7 +1,7 @@
 spring:
   data:
     mongodb:
-      uri: mongodb://root:85857855@localhost:28000/drools?authSource=admin
+      uri: mongodb://root:85857855@localhost:27017/drools?authSource=admin
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
