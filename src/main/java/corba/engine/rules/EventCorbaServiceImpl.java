@@ -101,7 +101,7 @@ public class EventCorbaServiceImpl implements EventCorbaService {
         message.put("component_name",kafkaData.getTags().getComponentName());
         message.put("xpath", "/components/component/optical-channel/state/target-output-power");
         message.put("xpath-value", kafkaData.getTargetOutputPower());
-        message.put("message", "target-output-power is equal or higher than " + kafkaData.getTargetOutputPower());
+        message.put("message", "target-output-power is equal or higher than - 4.0 "); // + kafkaData.getTargetOutputPower());
 
         messages.add(message);
 
