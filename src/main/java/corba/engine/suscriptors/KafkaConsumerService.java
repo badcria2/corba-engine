@@ -1,6 +1,5 @@
 package corba.engine.suscriptors;
 
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -9,6 +8,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import corba.engine.models.KafkaData;
 import corba.engine.services.RuleService;
 import org.apache.avro.AvroRuntimeException;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.common.TopicPartition;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
@@ -17,16 +18,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class KafkaConsumerService {
+
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final RuleService ruleService;
     private String avroJsonDeserialize;
-
-    // Mapa para rastrear mensajes procesados con TTL
-    private final ConcurrentHashMap<String, Long> processedMessages = new ConcurrentHashMap<>();
-    private static final long TTL = TimeUnit.MINUTES.toMillis(5); // Tiempo para limpiar mensajes antiguos
 
     @Autowired
     public KafkaConsumerService(RuleService ruleService) {
@@ -35,8 +34,23 @@ public class KafkaConsumerService {
     }
 
     @KafkaListener(topics = "opt-term-target-out-pwr", groupId = "mi-grupo-consumidor")
-    public void listen_opt_term_target_out_pwr(String message) {
+    public void listen_opt_term_target_out_pwr(String message, Consumer<?, ?> consumer) {
         try {
+            // Posicionar el consumidor en los últimos mensajes disponibles
+            String topic = "opt-term-target-out-pwr";
+            List<TopicPartition> partitions = consumer.partitionsFor(topic).stream()
+                    .map(partitionInfo -> new TopicPartition(partitionInfo.topic(), partitionInfo.partition()))
+                    .collect(Collectors.toList());
+
+            consumer.assign(partitions);
+            consumer.seekToEnd(partitions);
+
+            // Mostrar los últimos offsets en cada partición
+            for (TopicPartition partition : partitions) {
+                long offset = consumer.position(partition);
+                System.out.println("Iniciando desde el último offset en la partición " + partition.partition() + ": " + offset);
+            }
+
             // Preprocesar el JSON antes de deserializarlo
             String avroJsonDeserializeTemp = preprocessJson(message);
 
@@ -44,7 +58,9 @@ public class KafkaConsumerService {
             objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
             List<KafkaData> kafkaDataList = objectMapper.readValue(avroJsonDeserializeTemp, objectMapper.getTypeFactory().constructCollectionType(List.class, KafkaData.class));
 
+            // Procesar los datos de Kafka
             processKafkaData(kafkaDataList);
+
         } catch (JsonProcessingException e) {
             System.out.println("Error de procesamiento JSON: " + e);
         } catch (AvroRuntimeException e) {
@@ -55,36 +71,28 @@ public class KafkaConsumerService {
     }
 
     private static String preprocessJson(String json) throws Exception {
-        // Crear un ObjectMapper
         ObjectMapper objectMapper = new ObjectMapper();
-
-        // Convertir el JSON a un JsonNode
         JsonNode rootNode = objectMapper.readTree(json);
 
-        // Iterar sobre los elementos y reemplazar los campos con guiones
         if (rootNode.isArray()) {
             for (JsonNode element : rootNode) {
-                // Verificar si el campo "tags" existe y es un objeto
                 JsonNode tagsNode = element.get("tags");
                 if (tagsNode != null && tagsNode.isObject()) {
-                    // Cambiar "subscription-name" a "subscription_name"
                     replaceFieldName((ObjectNode) tagsNode, "subscription-name", "subscription_name");
                 }
             }
         }
 
-        // Convertir de nuevo el JsonNode a una cadena JSON
         return objectMapper.writeValueAsString(rootNode);
     }
 
-    // Método para reemplazar un nombre de campo en un ObjectNode
     private static void replaceFieldName(ObjectNode objectNode, String oldName, String newName) {
         Iterator<String> fieldNames = objectNode.fieldNames();
         while (fieldNames.hasNext()) {
             String fieldName = fieldNames.next();
             if (fieldName.equals(oldName)) {
-                JsonNode fieldValue = objectNode.remove(fieldName);  // Eliminar el campo original
-                objectNode.set(newName, fieldValue);  // Establecer el campo con el nuevo nombre
+                JsonNode fieldValue = objectNode.remove(fieldName);
+                objectNode.set(newName, fieldValue);
             }
         }
     }
@@ -93,48 +101,8 @@ public class KafkaConsumerService {
         for (KafkaData dataEvaluar : data) {
             String uniqueId = dataEvaluar.getTimestamp() + "-" + dataEvaluar.getTags().getComponentName();
 
-            // Validar si el mensaje ya fue procesado
-           // if (processedMessages.putIfAbsent(uniqueId, System.currentTimeMillis()) == null) {
-            System.out.println("Data a evaluar:" + dataEvaluar.toString());
+            System.out.println("Data a evaluar: " + dataEvaluar.toString());
             ruleService.executeRulesWithEventKafka(dataEvaluar);
-           // } else {
-            //   System.out.println("Mensaje duplicado detectado y descartado: " + uniqueId);
-           // }
         }
-
-        //cleanupOldMessages();
     }
-
-    private void cleanupOldMessages() {
-        long currentTime = System.currentTimeMillis();
-        processedMessages.entrySet().removeIf(entry -> currentTime - entry.getValue() > TTL);
-    }
-   /* @KafkaListener(topics = "opt-term-inout-pwr", groupId = "mi-grupo-consumidor")
-    public void listen_opt_term_inout_pwr(String message) {
-
-        try {
-            // Preprocesar el JSON antes de deserializarlo
-            String avroJsonDeserializeTemp = preprocessJson(avroJsonDeserialize);
-
-            // Deserializar el JSON
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
-
-            List<KafkaData> kafkaDataList = objectMapper.readValue(avroJsonDeserializeTemp, objectMapper.getTypeFactory().constructCollectionType(List.class, KafkaData.class));
-
-            // Imprimir el resultado
-            for (KafkaData data : kafkaDataList) {
-                System.out.println(data);
-            }
-            processKafkaData(kafkaDataList);
-        } catch (JsonProcessingException e) {
-            System.out.println("Error de procesamiento JSON: " + e);
-        }       catch (AvroRuntimeException e) {
-            System.out.println("Error al deserializar AVRO: " +  e);
-        } catch (Exception e) {
-            System.out.println("Error general procesando el mensaje: " + e);
-        }
-    }*/
 }
-
-   /**/
