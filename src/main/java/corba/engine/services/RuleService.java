@@ -63,6 +63,7 @@ public class RuleService {
             sessionConsumer.accept(kieSession);
         } catch (Exception e) {
             logger.severe("Error durante la ejecución de reglas: " + e.getMessage());
+            e.printStackTrace();
         } finally {
             // No cerramos la sesión aquí, ya que puede ser necesaria en el siguiente ciclo
             lock.readLock().unlock();
