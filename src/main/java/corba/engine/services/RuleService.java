@@ -6,7 +6,6 @@ import corba.engine.models.Persona;
 import corba.engine.rules.EventCorbaService;
 import corba.engine.rules.Rule;
 import org.kie.api.KieBase;
-import org.kie.api.definition.KiePackage;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,13 +31,13 @@ public class RuleService {
     @Autowired
     private KieContainer kieContainer;
 
-    private KieSession kieSession;
+    private KieSession kieSession_global;
     private final ReadWriteLock lock = new ReentrantReadWriteLock(); // Bloqueo para concurrencia segura
 
     @PostConstruct
     public void initializeKieSession() {
         try {
-            kieSession = kieContainer.newKieSession();
+            kieSession_global = kieContainer.newKieSession();
             logger.info("kieSession inicializada correctamente.");
         } catch (Exception e) {
             logger.severe("Error al inicializar kieSession: " + e.getMessage());
@@ -54,13 +53,13 @@ public class RuleService {
         lock.readLock().lock();
         try {
             // Verificar si la sesión es válida antes de usarla
-            if (kieSession == null || isSessionDisposed()) {
+            if (kieSession_global == null || isSessionDisposed()) {
                 // Crear una nueva sesión si es necesario
-                kieSession = kieContainer.newKieSession();
+                kieSession_global = kieContainer.newKieSession();
                 logger.info("Nueva kieSession creada.");
             }
 
-            sessionConsumer.accept(kieSession);
+            sessionConsumer.accept(kieSession_global);
         } catch (Exception e) {
             logger.severe("Error durante la ejecución de reglas: " + e.getMessage());
             e.printStackTrace();
@@ -76,7 +75,7 @@ public class RuleService {
      */
     private boolean isSessionDisposed() {
         // Si no hay sesión o la sesión ha sido previamente cerrada (dispose), retornamos true
-        return !kieSession.getObjects().iterator().hasNext();
+        return !kieSession_global.getObjects().iterator().hasNext();
     }
 
     /**
@@ -101,7 +100,8 @@ public class RuleService {
      */
     public void executeRulesWithEventKafka(KafkaData kafkaData) {
         executeWithSession(kieSession -> {
-            listRules(kieSession.getKieBase());
+            listRules(kieSession_global.getKieBase());
+            logFactsInSession(kieSession_global);
             kieSession.insert(kafkaData);
             kieSession.insert(actionService);
             logFactsInSession(kieSession);
@@ -131,14 +131,14 @@ public class RuleService {
         lock.writeLock().lock();
         try {
             logger.info("Recargando reglas desde MongoDB...");
-            if (kieSession != null) {
-                kieSession.dispose(); // Liberar recursos de la sesión anterior
+            if (kieSession_global != null) {
+                kieSession_global.dispose(); // Liberar recursos de la sesión anterior
             }
 
-            kieSession = kieContainer.newKieSession(); // Crear una nueva sesión
+            kieSession_global = kieContainer.newKieSession(); // Crear una nueva sesión
             List<Rule> rules = ruleServiceMongo.loadRulesFromMongo();
             for (Rule rule : rules) {
-                kieSession.insert(rule);
+                kieSession_global.insert(rule);
                 logger.info("Regla recargada: " + rule.getName());
             }
 
