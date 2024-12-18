@@ -25,12 +25,16 @@ public class RuleService {
 
     @Autowired
     private EventCorbaService actionService;
-
+    private final RuleService ruleServicePerson ;
     @Autowired
     private KieContainer kieContainer;
 
     private KieSession kieSession;
     private final ReadWriteLock lock = new ReentrantReadWriteLock(); // Bloqueo para concurrencia segura
+
+    public RuleService(RuleService ruleServicePerson) {
+        this.ruleServicePerson = ruleServicePerson;
+    }
 
 
     /**
@@ -76,7 +80,7 @@ public class RuleService {
     public void executeRulesWithEventKafka(KafkaData kafkaData) {
         lock.readLock().lock();
         try {
-            kieSession = kieContainer.newKieSession();
+            ruleServicePerson.reloadRules();
             executeWithSession(kieSession -> {
                 kieSession.insert(kafkaData);
                 kieSession.insert(actionService);
