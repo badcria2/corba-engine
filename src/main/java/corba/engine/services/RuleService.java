@@ -106,7 +106,7 @@ public class RuleService {
         kieBase.getKiePackages().forEach(kiePackage -> {
             logger.info("Paquete: " + kiePackage.getName());
             kiePackage.getRules().forEach(rule ->
-                    logger.info("Regla estándar Drools: " + rule.getName())
+                    logger.info("Regla estándar Drools: " + rule.getName() +" :::  " +  rule.getMetaData().toString())
             );
         });
 
@@ -116,14 +116,21 @@ public class RuleService {
                     .stream()
                     .filter(obj -> obj instanceof Rule) // Filtrar objetos de tipo Rule
                     .map(obj -> (Rule) obj) // Convertir a Rule
-                    .forEach(rule ->
-                            logger.info(rule.toString()) // Usar toString() de tu clase Rule
-                    );
+                    .forEach(rule -> {
+                        logger.info("ID: " + rule.getId());
+                        logger.info("Paquete: " + rule.getPackageName());
+                        logger.info("Imports: " + rule.getImports());
+                        logger.info("Nombre: " + rule.getName());
+                        logger.info("Condiciones: " + rule.getConditions());
+                        logger.info("Acciones: " + rule.getActions());
+                        logger.info("-----------------------------");
+                    });
         } else {
             logger.warning("La sesión no está inicializada. No se pueden listar las reglas personalizadas.");
         }
         logger.info("=========================================");
     }
+
     /**
      * Recarga las reglas desde MongoDB, creando una nueva sesión.
      */
