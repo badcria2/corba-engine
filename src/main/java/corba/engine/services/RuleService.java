@@ -102,17 +102,28 @@ public class RuleService {
      * Método para listar todas las reglas cargadas en la KieBase
      */
     private void listRules(KieBase kieBase) {
-        Collection<KiePackage> kiePackages = kieBase.getKiePackages();
-        logger.info("=== Reglas cargadas ===");
-        for (KiePackage kiePackage : kiePackages) {
-            for (org.kie.api.definition.rule.Rule rule : kiePackage.getRules()) {
-                logger.info(rule.toString().toString());
-                logger.info("Regla: " + rule.getName() + " (Paquete: " + kiePackage.getName() + ")"+ " (condition: " + kiePackage.getQueries() + ")");
-            }
-        }
-        logger.info("=======================");
-    }
+        logger.info("=== Reglas cargadas en KieBase ===");
+        kieBase.getKiePackages().forEach(kiePackage -> {
+            logger.info("Paquete: " + kiePackage.getName());
+            kiePackage.getRules().forEach(rule ->
+                    logger.info("Regla estándar Drools: " + rule.getName())
+            );
+        });
 
+        logger.info("=== Reglas personalizadas cargadas en la sesión ===");
+        if (kieSession != null) {
+            kieSession.getObjects()
+                    .stream()
+                    .filter(obj -> obj instanceof Rule) // Filtrar objetos de tipo Rule
+                    .map(obj -> (Rule) obj) // Convertir a Rule
+                    .forEach(rule ->
+                            logger.info(rule.toString()) // Usar toString() de tu clase Rule
+                    );
+        } else {
+            logger.warning("La sesión no está inicializada. No se pueden listar las reglas personalizadas.");
+        }
+        logger.info("=========================================");
+    }
     /**
      * Recarga las reglas desde MongoDB, creando una nueva sesión.
      */
