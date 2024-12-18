@@ -27,7 +27,7 @@ public class DroolsSessionConfiguration {
 
     @Autowired
     private RuleServiceMongo ruleService; // Inyectar el servicio de reglas
-    @Bean
+   /* @Bean
     public synchronized KieSession kieSession() {
         logger.info("Creando una nueva sesión de Drools...");
         kieSession = kieContainer.newKieSession();
@@ -38,7 +38,7 @@ public class DroolsSessionConfiguration {
         // Agregar listeners personalizados
         kieSession.addEventListener(new CustomAgendaEventListener(actionService));
         return kieSession;
-    }
+    }*//*
     private void loadRulesFromMongo(KieSession kieSession) {
         try {
             // Llamamos al servicio que carga las reglas desde MongoDB
@@ -57,7 +57,7 @@ public class DroolsSessionConfiguration {
             logger.severe("Error al cargar las reglas desde MongoDB: " + e.getMessage());
             throw new RuntimeException("Error al cargar las reglas desde MongoDB", e);
         }
-    }
+    }*/
 
 
     @PreDestroy

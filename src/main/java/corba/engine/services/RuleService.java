@@ -102,9 +102,9 @@ public class RuleService {
         executeWithSession(kieSession -> {
             listRules(kieSession_global.getKieBase());
             logFactsInSession(kieSession_global);
-            kieSession.insert(kafkaData);
-            kieSession.insert(actionService);
-            logFactsInSession(kieSession);
+            kieSession_global.insert(kafkaData);
+            kieSession_global.insert(actionService);
+            logFactsInSession(kieSession_global);
             int reglasEjecutadas = kieSession.fireAllRules();
             logger.info("Reglas ejecutadas: " + reglasEjecutadas);
         });
