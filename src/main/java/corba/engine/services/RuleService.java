@@ -55,7 +55,8 @@ public class RuleService {
         try {
             // Verificar si la sesión es válida antes de usarla
             if (kieSession == null || isSessionDisposed()) {
-                kieSession = kieContainer.newKieSession(); // Crear una nueva sesión si es necesario
+                // Crear una nueva sesión si es necesario
+                kieSession = kieContainer.newKieSession();
                 logger.info("Nueva kieSession creada.");
             }
 
@@ -63,11 +64,7 @@ public class RuleService {
         } catch (Exception e) {
             logger.severe("Error durante la ejecución de reglas: " + e.getMessage());
         } finally {
-            // Liberar recursos si la sesión ya no es necesaria
-            if (kieSession != null) {
-                kieSession.dispose();
-                logger.info("Sesión de Drools cerrada.");
-            }
+            // No cerramos la sesión aquí, ya que puede ser necesaria en el siguiente ciclo
             lock.readLock().unlock();
         }
     }
