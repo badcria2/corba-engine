@@ -43,6 +43,7 @@ public class RuleService {
             logger.severe("Error al inicializar kieSession: " + e.getMessage());
         }
     }
+
     /**
      * Limpia todos los hechos presentes en la sesión.
      *
@@ -52,6 +53,7 @@ public class RuleService {
         session.getObjects().forEach(fact -> session.delete(session.getFactHandle(fact)));
         logger.info("Hechos eliminados de la sesión.");
     }
+
     /**
      * Ejecuta lógica personalizada con una nueva sesión de Drools.
      *
@@ -62,9 +64,14 @@ public class RuleService {
         try {
             // Verificar si la sesión es válida antes de usarla
             if (kieSession_global == null || isSessionDisposed()) {
-                // Crear una nueva sesión si es necesario
-                kieSession_global = kieContainer.newKieSession();
-                logger.info("Nueva kieSession creada.");
+                lock.writeLock().lock();  // Cambiar a bloqueo de escritura para crear la sesión
+                try {
+                    // Crear una nueva sesión si es necesario
+                    kieSession_global = kieContainer.newKieSession();
+                    logger.info("Nueva kieSession creada.");
+                } finally {
+                    lock.writeLock().unlock();
+                }
             }
 
             sessionConsumer.accept(kieSession_global);
@@ -72,7 +79,6 @@ public class RuleService {
             logger.severe("Error durante la ejecución de reglas: " + e.getMessage());
             e.printStackTrace();
         } finally {
-            // No cerramos la sesión aquí, ya que puede ser necesaria en el siguiente ciclo
             lock.readLock().unlock();
         }
     }
@@ -109,11 +115,11 @@ public class RuleService {
     public void executeRulesWithEventKafka(KafkaData kafkaData) {
         executeWithSession(kieSession -> {
             clearSession(kieSession);  // Limpiar hechos previos
-            listRules(kieSession_global.getKieBase());
-            logFactsInSession(kieSession_global);
-            kieSession_global.insert(kafkaData);
-            kieSession_global.insert(actionService);
-            logFactsInSession(kieSession_global);
+            listRules(kieSession.getKieBase());  // Usar la sesión proporcionada
+            logFactsInSession(kieSession);
+            kieSession.insert(kafkaData);
+            kieSession.insert(actionService);
+            logFactsInSession(kieSession);
             int reglasEjecutadas = kieSession.fireAllRules();
             logger.info("Reglas ejecutadas: " + reglasEjecutadas);
         });
