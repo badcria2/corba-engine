@@ -106,7 +106,8 @@ public class RuleService {
         logger.info("=== Reglas cargadas ===");
         for (KiePackage kiePackage : kiePackages) {
             for (org.kie.api.definition.rule.Rule rule : kiePackage.getRules()) {
-                logger.info("Regla: " + rule.getName() + " (Paquete: " + kiePackage.getName() + ")");
+                logger.info(rule.toString().toString());
+                logger.info("Regla: " + rule.getName() + " (Paquete: " + kiePackage.getName() + ")"+ " (condition: " + kiePackage.getQueries() + ")");
             }
         }
         logger.info("=======================");
