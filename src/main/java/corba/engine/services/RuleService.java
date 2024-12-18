@@ -79,11 +79,6 @@ public class RuleService {
     public void executeRulesWithEventKafka(KafkaData kafkaData) {
         lock.readLock().lock();
         try {
-            // Crear una nueva sesión cada vez
-            if (kieSession != null) {
-                kieSession.dispose(); // Liberar la sesión anterior
-            }
-            kieSession = kieContainer.newKieSession();
 
             listRules(kieSession.getKieBase());
 
