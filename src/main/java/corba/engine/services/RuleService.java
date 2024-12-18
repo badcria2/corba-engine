@@ -28,16 +28,12 @@ public class RuleService {
 
     @Autowired
     private EventCorbaService actionService;
-    private final RuleService ruleServicePerson ;
     @Autowired
     private KieContainer kieContainer;
 
     private KieSession kieSession;
     private final ReadWriteLock lock = new ReentrantReadWriteLock(); // Bloqueo para concurrencia segura
 
-    public RuleService(RuleService ruleServicePerson) {
-        this.ruleServicePerson = ruleServicePerson;
-    }
 
 
     /**
