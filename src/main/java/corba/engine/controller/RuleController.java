@@ -1,5 +1,6 @@
 package corba.engine.controller;
 
+import corba.engine.config.RuleServiceMongo;
 import corba.engine.models.Persona;
 import corba.engine.rules.Rule;
 import corba.engine.services.RuleService;
@@ -22,13 +23,15 @@ public class RuleController {
     private final RuleService ruleServicePerson ;
 
     @Autowired
-    public RuleController(RuleServiceMaintenance ruleService, RuleService ruleServicePerson) {
+    public RuleController(RuleServiceMaintenance ruleService, RuleService ruleServicePerson,RuleServiceMongo ruleServiceMongo) {
         this.ruleService = ruleService;
         this.ruleServicePerson = ruleServicePerson;
     }
     @PostMapping("/validar-edad")
     public @ResponseBody Persona validarEdad(@RequestBody Persona persona) {
         logger.info("Persona recibida para validar edad: " + persona);
+
+        ruleServicePerson.reloadRules();
         ruleServicePerson.executeRulesWithPerson(persona);
         return persona;
     }
@@ -52,18 +55,23 @@ public class RuleController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Rule> updateRule(@PathVariable String id, @RequestBody Rule rule) {
-        return ResponseEntity.ok(ruleService.updateRule(id, rule));
+        Rule updatedRule = ruleService.updateRule(id, rule);
+        ruleServicePerson.reloadRules();
+        return ResponseEntity.ok(updatedRule);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRule(@PathVariable String id) {
         ruleService.deleteRule(id);
+        ruleServicePerson.reloadRules();
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/search")
     public ResponseEntity<List<Rule>> searchRulesByName(@RequestParam String pattern) {
         List<Rule> rules = ruleService.searchRulesByNamePattern(".*" + pattern + ".*");
+
+        ruleServicePerson.reloadRules();
         return ResponseEntity.ok(rules);
     }
 
