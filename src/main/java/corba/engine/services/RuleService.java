@@ -43,7 +43,15 @@ public class RuleService {
             logger.severe("Error al inicializar kieSession: " + e.getMessage());
         }
     }
-
+    /**
+     * Limpia todos los hechos presentes en la sesión.
+     *
+     * @param session La sesión de Drools de la cual se eliminarán los hechos.
+     */
+    private void clearSession(KieSession session) {
+        session.getObjects().forEach(fact -> session.delete(session.getFactHandle(fact)));
+        logger.info("Hechos eliminados de la sesión.");
+    }
     /**
      * Ejecuta lógica personalizada con una nueva sesión de Drools.
      *
@@ -100,6 +108,7 @@ public class RuleService {
      */
     public void executeRulesWithEventKafka(KafkaData kafkaData) {
         executeWithSession(kieSession -> {
+            clearSession(kieSession);  // Limpiar hechos previos
             listRules(kieSession_global.getKieBase());
             logFactsInSession(kieSession_global);
             kieSession_global.insert(kafkaData);
