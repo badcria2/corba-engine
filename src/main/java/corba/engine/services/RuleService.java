@@ -53,6 +53,12 @@ public class RuleService {
     private void executeWithSession(Consumer<KieSession> sessionConsumer) {
         lock.readLock().lock();
         try {
+            // Verificar si la sesión es válida antes de usarla
+            if (kieSession == null || isSessionDisposed()) {
+                kieSession = kieContainer.newKieSession(); // Crear una nueva sesión si es necesario
+                logger.info("Nueva kieSession creada.");
+            }
+
             sessionConsumer.accept(kieSession);
         } catch (Exception e) {
             logger.severe("Error durante la ejecución de reglas: " + e.getMessage());
@@ -64,6 +70,15 @@ public class RuleService {
             }
             lock.readLock().unlock();
         }
+    }
+
+    /**
+     * Verifica si la sesión de Drools ha sido descartada (dispose).
+     * Este método es una solución para garantizar que la sesión no se esté utilizando después de ser cerrada.
+     */
+    private boolean isSessionDisposed() {
+        // Si no hay sesión o la sesión ha sido previamente cerrada (dispose), retornamos true
+        return !kieSession.getObjects().iterator().hasNext();
     }
 
     /**
@@ -112,7 +127,7 @@ public class RuleService {
     }
 
     /**
-     * Recarga las reglas desde MongoDB, creando una nueva sesión.
+     * Recarga las reglas desde MongoDB, creando una nueva sesión si es necesario.
      */
     public void reloadRules() {
         lock.writeLock().lock();
