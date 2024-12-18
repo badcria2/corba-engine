@@ -76,6 +76,7 @@ public class RuleService {
     public void executeRulesWithEventKafka(KafkaData kafkaData) {
         lock.readLock().lock();
         try {
+            kieSession = kieContainer.newKieSession();
             executeWithSession(kieSession -> {
                 kieSession.insert(kafkaData);
                 kieSession.insert(actionService);
