@@ -12,6 +12,7 @@ import org.kie.api.runtime.KieSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -70,7 +71,15 @@ public class RuleService {
             lock.readLock().unlock();
         }
     }
-
+    @PostConstruct
+    public void initializeKieSession() {
+        try {
+            kieSession = kieContainer.newKieSession();
+            logger.info("kieSession inicializada correctamente.");
+        } catch (Exception e) {
+            logger.severe("Error al inicializar kieSession: " + e.getMessage());
+        }
+    }
     /**
      * Ejecuta reglas utilizando un objeto de tipo KafkaData.
      *
@@ -89,7 +98,11 @@ public class RuleService {
                 int reglasEjecutadas = kieSession.fireAllRules();
                 logger.info("Reglas ejecutadas: " + reglasEjecutadas);
             });
-        } finally {
+        }  catch (Exception e) {
+        logger.severe("Error general procesando el mensaje: " + e.getMessage());
+        e.printStackTrace(); // Esto imprimirá el stacktrace completo
+    }
+    finally {
             lock.readLock().unlock();
         }
     }
@@ -134,16 +147,15 @@ public class RuleService {
         try {
             logger.info("Recargando reglas desde MongoDB...");
             if (kieSession != null) {
-                kieSession.dispose();
+                kieSession.dispose(); // Liberar recursos de la sesión anterior
             }
-            kieSession = kieContainer.newKieSession();
-            kieSession.getObjects().forEach(fact -> kieSession.delete(kieSession.getFactHandle(fact)));
 
+            kieSession = kieContainer.newKieSession(); // Crear una nueva sesión
             List<Rule> rules = ruleServiceMongo.loadRulesFromMongo();
-            rules.forEach(rule -> {
+            for (Rule rule : rules) {
                 kieSession.insert(rule);
                 logger.info("Regla recargada: " + rule.getName());
-            });
+            }
 
             logger.info("Reglas recargadas exitosamente.");
         } catch (Exception e) {
@@ -153,6 +165,7 @@ public class RuleService {
             lock.writeLock().unlock();
         }
     }
+
 
     /**
      * Envía una campaña utilizando el servicio de acciones personalizadas.
