@@ -5,11 +5,14 @@ import corba.engine.models.KafkaData;
 import corba.engine.models.Persona;
 import corba.engine.rules.EventCorbaService;
 import corba.engine.rules.Rule;
+import org.kie.api.KieBase;
+import org.kie.api.definition.KiePackage;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -25,13 +28,16 @@ public class RuleService {
 
     @Autowired
     private EventCorbaService actionService;
+    private final RuleService ruleServicePerson ;
     @Autowired
     private KieContainer kieContainer;
 
     private KieSession kieSession;
     private final ReadWriteLock lock = new ReentrantReadWriteLock(); // Bloqueo para concurrencia segura
 
-
+    public RuleService(RuleService ruleServicePerson) {
+        this.ruleServicePerson = ruleServicePerson;
+    }
 
 
     /**
@@ -77,7 +83,14 @@ public class RuleService {
     public void executeRulesWithEventKafka(KafkaData kafkaData) {
         lock.readLock().lock();
         try {
-            reloadRules();
+            // Crear una nueva sesión cada vez
+            if (kieSession != null) {
+                kieSession.dispose(); // Liberar la sesión anterior
+            }
+            kieSession = kieContainer.newKieSession();
+
+            listRules(kieSession.getKieBase());
+
             executeWithSession(kieSession -> {
                 kieSession.insert(kafkaData);
                 kieSession.insert(actionService);
@@ -88,6 +101,19 @@ public class RuleService {
         } finally {
             lock.readLock().unlock();
         }
+    }
+    /**
+     * Método para listar todas las reglas cargadas en la KieBase
+     */
+    private void listRules(KieBase kieBase) {
+        Collection<KiePackage> kiePackages = kieBase.getKiePackages();
+        logger.info("=== Reglas cargadas ===");
+        for (KiePackage kiePackage : kiePackages) {
+            for (org.kie.api.definition.rule.Rule rule : kiePackage.getRules()) {
+                logger.info("Regla: " + rule.getName() + " (Paquete: " + kiePackage.getName() + ")");
+            }
+        }
+        logger.info("=======================");
     }
 
     /**
