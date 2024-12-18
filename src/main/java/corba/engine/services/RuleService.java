@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -29,48 +28,13 @@ public class RuleService {
 
     @Autowired
     private EventCorbaService actionService;
+
     @Autowired
     private KieContainer kieContainer;
 
     private KieSession kieSession;
     private final ReadWriteLock lock = new ReentrantReadWriteLock(); // Bloqueo para concurrencia segura
 
-
-
-    /**
-     * Ejecuta lógica personalizada con una nueva sesión de Drools.
-     *
-     * @param sessionConsumer Lógica personalizada que se ejecutará con la sesión.
-     */
-    private void executeWithSession(Consumer<KieSession> sessionConsumer) {
-
-        try {
-            sessionConsumer.accept(kieSession);
-        } finally {
-            kieSession.dispose(); // Liberar recursos
-            logger.info("Sesión de Drools cerrada.");
-        }
-    }
-
-    /**
-     * Ejecuta reglas utilizando un objeto de tipo Persona.
-     *
-     * @param persona Objeto Persona que se insertará en la sesión.
-     */
-    public void executeRulesWithPerson(Persona persona) {
-        lock.readLock().lock();
-        try {
-            executeWithSession(kieSession -> {
-                kieSession.insert(persona);
-                kieSession.insert(actionService);
-                logFactsInSession(kieSession);
-                int reglasEjecutadas = kieSession.fireAllRules();
-                logger.info("Reglas ejecutadas: " + reglasEjecutadas);
-            });
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
     @PostConstruct
     public void initializeKieSession() {
         try {
@@ -80,32 +44,59 @@ public class RuleService {
             logger.severe("Error al inicializar kieSession: " + e.getMessage());
         }
     }
+
+    /**
+     * Ejecuta lógica personalizada con una nueva sesión de Drools.
+     *
+     * @param sessionConsumer Lógica personalizada que se ejecutará con la sesión.
+     */
+    private void executeWithSession(Consumer<KieSession> sessionConsumer) {
+        lock.readLock().lock();
+        try {
+            sessionConsumer.accept(kieSession);
+        } catch (Exception e) {
+            logger.severe("Error durante la ejecución de reglas: " + e.getMessage());
+        } finally {
+            // Liberar recursos si la sesión ya no es necesaria
+            if (kieSession != null) {
+                kieSession.dispose();
+                logger.info("Sesión de Drools cerrada.");
+            }
+            lock.readLock().unlock();
+        }
+    }
+
+    /**
+     * Ejecuta reglas utilizando un objeto de tipo Persona.
+     *
+     * @param persona Objeto Persona que se insertará en la sesión.
+     */
+    public void executeRulesWithPerson(Persona persona) {
+        executeWithSession(kieSession -> {
+            kieSession.insert(persona);
+            kieSession.insert(actionService);
+            logFactsInSession(kieSession);
+            int reglasEjecutadas = kieSession.fireAllRules();
+            logger.info("Reglas ejecutadas: " + reglasEjecutadas);
+        });
+    }
+
     /**
      * Ejecuta reglas utilizando un objeto de tipo KafkaData.
      *
      * @param kafkaData Objeto KafkaData que se insertará en la sesión.
      */
     public void executeRulesWithEventKafka(KafkaData kafkaData) {
-        lock.readLock().lock();
-        try {
-
+        executeWithSession(kieSession -> {
             listRules(kieSession.getKieBase());
+            kieSession.insert(kafkaData);
+            kieSession.insert(actionService);
+            logFactsInSession(kieSession);
+            int reglasEjecutadas = kieSession.fireAllRules();
+            logger.info("Reglas ejecutadas: " + reglasEjecutadas);
+        });
+    }
 
-            executeWithSession(kieSession -> {
-                kieSession.insert(kafkaData);
-                kieSession.insert(actionService);
-                logFactsInSession(kieSession);
-                int reglasEjecutadas = kieSession.fireAllRules();
-                logger.info("Reglas ejecutadas: " + reglasEjecutadas);
-            });
-        }  catch (Exception e) {
-        logger.severe("Error general procesando el mensaje: " + e.getMessage());
-        e.printStackTrace(); // Esto imprimirá el stacktrace completo
-    }
-    finally {
-            lock.readLock().unlock();
-        }
-    }
     /**
      * Método para listar todas las reglas cargadas en la KieBase
      */
@@ -113,29 +104,10 @@ public class RuleService {
         logger.info("=== Reglas cargadas en KieBase ===");
         kieBase.getKiePackages().forEach(kiePackage -> {
             logger.info("Paquete: " + kiePackage.getName());
-            kiePackage.getRules().forEach(rule ->
-                    logger.info("Regla estándar Drools: " + rule.getName() +" :::  " +  rule.getMetaData().toString())
-            );
+            kiePackage.getRules().forEach(rule -> {
+                logger.info("Regla estándar Drools: " + rule.getName() + " :::  " + rule.getMetaData().toString());
+            });
         });
-
-        logger.info("=== Reglas personalizadas cargadas en la sesión ===");
-        if (kieSession != null) {
-            kieSession.getObjects()
-                    .stream()
-                    .filter(obj -> obj instanceof Rule) // Filtrar objetos de tipo Rule
-                    .map(obj -> (Rule) obj) // Convertir a Rule
-                    .forEach(rule -> {
-                        logger.info("ID: " + rule.getId());
-                        logger.info("Paquete: " + rule.getPackageName());
-                        logger.info("Imports: " + rule.getImports());
-                        logger.info("Nombre: " + rule.getName());
-                        logger.info("Condiciones: " + rule.getConditions());
-                        logger.info("Acciones: " + rule.getActions());
-                        logger.info("-----------------------------");
-                    });
-        } else {
-            logger.warning("La sesión no está inicializada. No se pueden listar las reglas personalizadas.");
-        }
         logger.info("=========================================");
     }
 
@@ -166,7 +138,6 @@ public class RuleService {
         }
     }
 
-
     /**
      * Envía una campaña utilizando el servicio de acciones personalizadas.
      *
@@ -174,20 +145,6 @@ public class RuleService {
      */
     public void enviarcampania(Persona persona) {
         actionService.enviarcampania(persona);
-    }
-
-    /**
-     * Registra las reglas activas en la sesión.
-     *
-     * @param session Sesión de Drools.
-     */
-    private void logRulesInSession(KieSession session) {
-        logger.info("Reglas activas en la sesión:");
-        kieSession.getKieBase().getKiePackages().forEach(kiePackage ->
-                kiePackage.getRules().forEach(rule ->
-                        logger.info("Regla activa: " + rule.getName())
-                )
-        );
     }
 
     /**
