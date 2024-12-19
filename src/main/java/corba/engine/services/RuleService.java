@@ -42,12 +42,15 @@ public class RuleService {
         KieServices kieServices = KieServices.Factory.get();
         this.kieContainer = kieServices.getKieClasspathContainer();
     }
-
     private void executeWithNewSession(Consumer<KieSession> sessionConsumer) {
         KieSession newKieSession = null;
         try {
             lock.readLock().lock(); // Aseguramos que no haya escritura mientras ejecutamos
             newKieSession = kieContainer.newKieSession();
+            if (newKieSession == null) {
+                logger.severe("No se pudo crear una nueva KieSession.");
+                return;
+            }
             logger.info("Nueva KieSession creada para ejecución.");
             sessionConsumer.accept(newKieSession);
         } catch (Exception e) {
