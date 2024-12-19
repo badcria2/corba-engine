@@ -21,6 +21,14 @@ public class EventCorbaServiceImpl implements EventCorbaService {
     private final GraphQLService graphQLService;
     private final KafkaProducerService kafkaProducerService;
 
+    @Override
+    public String toString() {
+        return "EventCorbaServiceImpl{" +
+                "graphQLService=" + graphQLService +
+                ", kafkaProducerService=" + kafkaProducerService +
+                '}';
+    }
+
     @Autowired
     public EventCorbaServiceImpl(GraphQLService graphQLService, KafkaProducerService kafkaProducerService) {
         this.graphQLService = graphQLService;

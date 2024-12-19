@@ -6,12 +6,17 @@ import corba.engine.models.Persona;
 import corba.engine.rules.EventCorbaService;
 import corba.engine.rules.Rule;
 import org.kie.api.KieBase;
+import org.kie.api.builder.KieBuilder;
+import org.kie.api.builder.KieFileSystem;
+import org.kie.api.builder.Message;
+import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
+import org.kie.api.KieServices;
+import org.kie.internal.io.ResourceFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -28,95 +33,47 @@ public class RuleService {
     @Autowired
     private EventCorbaService actionService;
 
-    @Autowired
     private KieContainer kieContainer;
 
-    private KieSession kieSession_global;
-    private final ReadWriteLock lock = new ReentrantReadWriteLock(); // Bloqueo para concurrencia segura
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    @PostConstruct
-    public void initializeKieSession() {
-        try {
-            kieSession_global = kieContainer.newKieSession();
-            logger.info("kieSession inicializada correctamente.");
-        } catch (Exception e) {
-            logger.severe("Error al inicializar kieSession: " + e.getMessage());
-        }
+    public RuleService() {
+        // Inicializar el KieContainer con una configuración inicial
+        KieServices kieServices = KieServices.Factory.get();
+        this.kieContainer = kieServices.getKieClasspathContainer();
     }
 
-    /**
-     * Limpia todos los hechos presentes en la sesión.
-     *
-     * @param session La sesión de Drools de la cual se eliminarán los hechos.
-     */
-    private void clearSession(KieSession session) {
-        session.getObjects().forEach(fact -> session.delete(session.getFactHandle(fact)));
-        logger.info("Hechos eliminados de la sesión.");
-    }
-
-    /**
-     * Ejecuta lógica personalizada con una nueva sesión de Drools.
-     *
-     * @param sessionConsumer Lógica personalizada que se ejecutará con la sesión.
-     */
-    private void executeWithSession(Consumer<KieSession> sessionConsumer) {
-        lock.readLock().lock();
+    private void executeWithNewSession(Consumer<KieSession> sessionConsumer) {
+        KieSession newKieSession = null;
         try {
-            // Verificar si la sesión es válida antes de usarla
-            if (kieSession_global == null || isSessionDisposed()) {
-                lock.writeLock().lock();  // Cambiar a bloqueo de escritura para crear la sesión
-                try {
-                    // Crear una nueva sesión si es necesario
-                    kieSession_global = kieContainer.newKieSession();
-                    logger.info("Nueva kieSession creada.");
-                } finally {
-                    lock.writeLock().unlock();
-                }
-            }
-
-            sessionConsumer.accept(kieSession_global);
+            lock.readLock().lock(); // Aseguramos que no haya escritura mientras ejecutamos
+            newKieSession = kieContainer.newKieSession();
+            logger.info("Nueva KieSession creada para ejecución.");
+            sessionConsumer.accept(newKieSession);
         } catch (Exception e) {
             logger.severe("Error durante la ejecución de reglas: " + e.getMessage());
-            e.printStackTrace();
         } finally {
+            if (newKieSession != null) {
+                newKieSession.dispose(); // Asegurar la eliminación de la sesión
+                logger.info("KieSession desechada después de la ejecución.");
+            }
             lock.readLock().unlock();
         }
     }
 
-    /**
-     * Verifica si la sesión de Drools ha sido descartada (dispose).
-     * Este método es una solución para garantizar que la sesión no se esté utilizando después de ser cerrada.
-     */
-    private boolean isSessionDisposed() {
-        // Si no hay sesión o la sesión ha sido previamente cerrada (dispose), retornamos true
-        return !kieSession_global.getObjects().iterator().hasNext();
-    }
-
-    /**
-     * Ejecuta reglas utilizando un objeto de tipo Persona.
-     *
-     * @param persona Objeto Persona que se insertará en la sesión.
-     */
     public void executeRulesWithPerson(Persona persona) {
-        executeWithSession(kieSession -> {
+        executeWithNewSession(kieSession -> {
             kieSession.insert(persona);
             kieSession.insert(actionService);
+            listRules(kieSession.getKieBase());
             logFactsInSession(kieSession);
             int reglasEjecutadas = kieSession.fireAllRules();
             logger.info("Reglas ejecutadas: " + reglasEjecutadas);
         });
     }
 
-    /**
-     * Ejecuta reglas utilizando un objeto de tipo KafkaData.
-     *
-     * @param kafkaData Objeto KafkaData que se insertará en la sesión.
-     */
     public void executeRulesWithEventKafka(KafkaData kafkaData) {
-        executeWithSession(kieSession -> {
-            clearSession(kieSession);  // Limpiar hechos previos
-            listRules(kieSession.getKieBase());  // Usar la sesión proporcionada
-            logFactsInSession(kieSession);
+        executeWithNewSession(kieSession -> {
             kieSession.insert(kafkaData);
             kieSession.insert(actionService);
             logFactsInSession(kieSession);
@@ -125,63 +82,71 @@ public class RuleService {
         });
     }
 
-    /**
-     * Método para listar todas las reglas cargadas en la KieBase
-     */
-    private void listRules(KieBase kieBase) {
-        logger.info("=== Reglas cargadas en KieBase ===");
-        kieBase.getKiePackages().forEach(kiePackage -> {
-            logger.info("Paquete: " + kiePackage.getName());
-            kiePackage.getRules().forEach(rule -> {
-                logger.info("Regla estándar Drools: " + rule.getName() + " :::  " + rule.getMetaData().toString());
-            });
-        });
-        logger.info("=========================================");
-    }
-
-    /**
-     * Recarga las reglas desde MongoDB, creando una nueva sesión si es necesario.
-     */
     public void reloadRules() {
         lock.writeLock().lock();
         try {
             logger.info("Recargando reglas desde MongoDB...");
-            if (kieSession_global != null) {
-                kieSession_global.dispose(); // Liberar recursos de la sesión anterior
-            }
 
-            kieSession_global = kieContainer.newKieSession(); // Crear una nueva sesión
+            // Cargar las reglas desde MongoDB
             List<Rule> rules = ruleServiceMongo.loadRulesFromMongo();
-            for (Rule rule : rules) {
-                kieSession_global.insert(rule);
-                logger.info("Regla recargada: " + rule.getName());
+            logger.info("Total de reglas cargadas: " + rules.size());
+            if (rules.isEmpty()) {
+                logger.warning("No se encontraron reglas en MongoDB.");
+                return;
             }
 
-            logger.info("Reglas recargadas exitosamente.");
+            // Crear un nuevo KieFileSystem para compilar las reglas
+            KieServices kieServices = KieServices.Factory.get();
+            KieFileSystem kieFileSystem = kieServices.newKieFileSystem();
+
+            for (Rule rule : rules) {
+                try {
+                    kieFileSystem.write("src/main/resources/" + rule.getName() + ".drl",
+                            ruleServiceMongo.buildRuleContent(rule));
+                    logger.info("Regla cargada: " + rule.getName());
+                } catch (Exception e) {
+                    logger.severe("Error al procesar la regla: " + rule.getName() + ". Detalles: " + e.getMessage());
+                }
+            }
+
+            // Compilar las reglas
+            KieBuilder kieBuilder = kieServices.newKieBuilder(kieFileSystem);
+            kieBuilder.buildAll();
+
+            if (kieBuilder.getResults().hasMessages(Message.Level.ERROR)) {
+                logger.severe("Errores al compilar las reglas: " + kieBuilder.getResults().toString());
+                throw new IllegalStateException("Errores de compilación en las reglas.");
+            }
+
+            // Actualizar el KieContainer
+            this.kieContainer = kieServices.newKieContainer(kieServices.getRepository().getDefaultReleaseId());
+            logger.info("Reglas recargadas exitosamente y KieContainer actualizado.");
+
         } catch (Exception e) {
             logger.severe("Error al recargar reglas: " + e.getMessage());
-            throw new RuntimeException("Error al recargar reglas en Drools", e);
         } finally {
             lock.writeLock().unlock();
         }
     }
 
-    /**
-     * Envía una campaña utilizando el servicio de acciones personalizadas.
-     *
-     * @param persona Objeto Persona a utilizar en la campaña.
-     */
-    public void enviarcampania(Persona persona) {
-        actionService.enviarcampania(persona);
+    private void logFactsInSession(KieSession session) {
+        logger.info("=== Hechos presentes en la sesión ===");
+        session.getObjects().forEach(fact -> logger.info("Hecho: " + fact.toString()));
+        logger.info("====================================");
     }
 
-    /**
-     * Registra los hechos presentes en la sesión.
-     *
-     * @param session Sesión de Drools.
-     */
-    private void logFactsInSession(KieSession session) {
-        logger.info("Hechos presentes en la sesión:");
-        session.getObjects().forEach(fact -> logger.info("Hecho: " + fact));
+    private void listRules(KieBase kieBase) {
+        logger.info("=== Reglas cargadas en KieBase ===");
+        kieBase.getKiePackages().forEach(kiePackage -> {
+            logger.info("Paquete: " + kiePackage.getName());
+            kiePackage.getRules().forEach(rule ->
+                    logger.info("Regla estándar Drools: " + rule.getName() + " ::: " + rule.getMetaData().toString()));
+        });
+        logger.info("===================================");
+    }
+
+    public void enviarcampania(Persona persona) {
+        actionService.enviarcampania(persona);
+        logger.info("Campaña enviada para persona: " + persona);
     }
 }
