@@ -33,6 +33,7 @@ public class RuleService {
     @Autowired
     private EventCorbaService actionService;
 
+    @Autowired
     private KieContainer kieContainer;
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -46,6 +47,12 @@ public class RuleService {
         KieSession newKieSession = null;
         try {
             lock.readLock().lock(); // Aseguramos que no haya escritura mientras ejecutamos
+            if (kieContainer != null) {
+                logger.info("KieContainer cargado correctamente.");
+            } else {
+                logger.severe("El KieContainer no está cargado.");
+            }
+
             newKieSession = kieContainer.newKieSession();
             if (newKieSession == null) {
                 logger.severe("No se pudo crear una nueva KieSession.");
@@ -116,13 +123,15 @@ public class RuleService {
             KieBuilder kieBuilder = kieServices.newKieBuilder(kieFileSystem);
             kieBuilder.buildAll();
 
+            // Verificar errores de compilación
             if (kieBuilder.getResults().hasMessages(Message.Level.ERROR)) {
                 logger.severe("Errores al compilar las reglas: " + kieBuilder.getResults().toString());
                 throw new IllegalStateException("Errores de compilación en las reglas.");
             }
 
-            // Actualizar el KieContainer
-            this.kieContainer = kieServices.newKieContainer(kieServices.getRepository().getDefaultReleaseId());
+            // Actualizar el KieContainer (no crear uno nuevo)
+            KieContainer updatedKieContainer = kieServices.newKieContainer(kieServices.getRepository().getDefaultReleaseId());
+            this.kieContainer = updatedKieContainer;
             logger.info("Reglas recargadas exitosamente y KieContainer actualizado.");
 
         } catch (Exception e) {
@@ -131,6 +140,7 @@ public class RuleService {
             lock.writeLock().unlock();
         }
     }
+
 
     private void logFactsInSession(KieSession session) {
         logger.info("=== Hechos presentes en la sesión ===");

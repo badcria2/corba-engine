@@ -27,6 +27,8 @@ import java.util.concurrent.TimeUnit;
 public class KafkaConsumerService implements ConsumerSeekAware {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Autowired
     private final RuleService ruleService;
 
     private final ConcurrentHashMap<String, Long> processedMessages = new ConcurrentHashMap<>();
