@@ -33,10 +33,11 @@ public class RuleService {
     @Autowired
     private EventCorbaService actionService;
 
-
+    @Autowired
     private KieContainer kieContainer;
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
 
     public RuleService() {
         // Inicializar el KieContainer con una configuración inicial
@@ -52,6 +53,14 @@ public class RuleService {
             } else {
                 logger.severe("El KieContainer no está cargado.");
             }
+            if (kieContainer.getKieBaseNames().isEmpty()) {
+                logger.severe("No se encontraron KieBases en el KieContainer.");
+            } else {
+                kieContainer.getKieBaseNames().forEach(kieBaseName -> {
+                    logger.info("KieBase encontrado: " + kieBaseName);
+                });
+            }
+
             newKieSession = kieContainer.newKieSession();
             if (newKieSession == null) {
                 logger.severe("No se pudo crear una nueva KieSession.");
