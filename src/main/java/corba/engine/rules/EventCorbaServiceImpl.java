@@ -3,12 +3,14 @@ package corba.engine.rules;
 import corba.engine.models.KafkaData;
 import corba.engine.request.KafkaRequest;
 import corba.engine.request.TagsRequest;
+import corba.engine.response.GraphQLResponse;
 import corba.engine.response.NetworkElement;
 import corba.engine.models.Persona;
 import corba.engine.services.GraphQLService;
 import corba.engine.suscriptors.KafkaProducerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -122,11 +124,47 @@ public class EventCorbaServiceImpl implements EventCorbaService {
         tags.setRuleName("oc-opt-term_OPT-CHAN_target-output-power_HIGH");
         kafkaRequest.setTags(tags);
 
+        sendMessage(name,source, "1/2/c1/1","to_JNP-MX-304__HIGH TARGET OPOUT"  );
 
         kafkaRequest.setValues(messages);
         sendMessageToKafka(kafkaRequest);
+
+
     }
 
+    @Override
+    public void sendMessage(String neName, String hostname, String interfaces, String description){
+        String username = "admin";
+        String password = "admin";
+        String rpcConfig =
+                "<edit-config>\n" +
+                        "<target>\n" +
+                        "  <candidate/>\n" +
+                        "</target>\n" +
+                        "<config>\n" +
+                        "  <interfaces xmlns=\"http://openconfig.net/yang/interfaces\">\n" +
+                        "    <interface>\n" +
+                        "      <name>"+interfaces+"</name>\n" +
+                        "      <config>\n" +
+                        "        <name>"+interfaces+"</name>\n" +
+                        "        <type xmlns:ianaift=\"urn:ietf:params:xml:ns:yang:iana-if-type\">ianaift:ethernetCsmacd</type>\n" +
+                        "        <description>to_JNP-MX-304</description>\n" +
+                        "      </config>\n" +
+                        "    </interface>\n" +
+                        "  </interfaces>\n" +
+                        "</config>\n" +
+                        "</edit-config>";
+        boolean commit = true;
+
+        Mono<GraphQLResponse> response = graphQLService.executeRPCForNetworkElement(neName, hostname, username, password, rpcConfig, commit);
+
+        response.subscribe(result -> {
+            System.out.println("Resultado: " + result);
+        }, error -> {
+            System.err.println("Error: " + error.getMessage());
+        });
+
+    }
     private void sendMessageToKafka(KafkaRequest kafkaRequest) {
         try {
             kafkaProducerService.sendMessage("opt-alert-drools", kafkaRequest);

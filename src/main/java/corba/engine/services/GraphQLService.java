@@ -56,4 +56,25 @@ public class GraphQLService {
         String query = String.format("query { getAllNetworkElementsByGroup(group: \\\"%s\\\") }", group);
         return executeQuery(query);
     }
+
+    // Método para ejecutar RPC en un elemento de red
+    public Mono<GraphQLResponse> executeRPCForNetworkElement(String neName, String hostname, String username, String password, String rpcConfig, boolean commit) {
+        // Construir el query GraphQL
+        String mutation = String.format(
+                "mutation { " +
+                        "  executeRPCForNetworkElement(params: {" +
+                        "    neName: \\\"%s\\\", " +
+                        "    hostname: \\\"%s\\\", " +
+                        "    username: \\\"%s\\\", " +
+                        "    password: \\\"%s\\\", " +
+                        "    rpc: { rpc: \\\"\"\"%s\"\"\", commit: %b }" +
+                        "  }) " +
+                        "}",
+                neName, hostname, username, password, rpcConfig, commit
+        );
+
+        // Llamar al método genérico para ejecutar el query
+        return executeQuery(mutation);
+    }
+
 }

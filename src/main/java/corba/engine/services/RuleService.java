@@ -96,6 +96,9 @@ public class RuleService {
             kieSession.insert(actionService);
             logFactsInSession(kieSession);
             int reglasEjecutadas = kieSession.fireAllRules();
+            if(reglasEjecutadas==0){
+                //actionService.sendMessage(kafkaData.getName(),kafkaData.get);
+            }
             logger.info("Reglas ejecutadas: " + reglasEjecutadas);
         });
     }
