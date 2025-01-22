@@ -124,12 +124,9 @@ public class EventCorbaServiceImpl implements EventCorbaService {
         tags.setRuleName("oc-opt-term_OPT-CHAN_target-output-power_HIGH");
         kafkaRequest.setTags(tags);
 
-        sendMessage(name,source, "1/2/c1/1","to_JNP-MX-304__HIGH TARGET OPOUT"  );
-
         kafkaRequest.setValues(messages);
         sendMessageToKafka(kafkaRequest);
-
-
+        sendMessage(name,source, "1/2/c1/1","to_JNP-MX-304__HIGH TARGET OPOUT"  );
     }
 
     @Override
@@ -155,14 +152,19 @@ public class EventCorbaServiceImpl implements EventCorbaService {
                         "</config>\n" +
                         "</edit-config>";
         boolean commit = true;
+        try {
+            Mono<GraphQLResponse> response = graphQLService.executeRPCForNetworkElement(neName, hostname, username, password, rpcConfig, commit);
 
-        Mono<GraphQLResponse> response = graphQLService.executeRPCForNetworkElement(neName, hostname, username, password, rpcConfig, commit);
+            response.subscribe(result -> {
+                System.out.println("Resultado: " + result);
+            }, error -> {
+                System.err.println("Error: " +error.getStackTrace() + "\n " + error.getMessage());
+            });
+        }catch (Exception ex){
+            System.err.println("Error:" + ex.getMessage());
+            throw ex;
+        }
 
-        response.subscribe(result -> {
-            System.out.println("Resultado: " + result);
-        }, error -> {
-            System.err.println("Error: " + error.getMessage());
-        });
 
     }
     private void sendMessageToKafka(KafkaRequest kafkaRequest) {
