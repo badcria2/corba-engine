@@ -62,13 +62,13 @@ public class GraphQLService {
     public Mono<GraphQLResponse> executeRPCForNetworkElement(String neName, String hostname, String username, String password, String rpcConfig, boolean commit) {
         // Construir el query GraphQL
         String mutation = String.format(
-                "mutation { " +
-                        "  executeRPCForNetworkElement(params: {" +
-                        "    neName: \\\"%s\\\", " +
-                        "    hostname: \\\"%s\\\", " +
-                        "    username: \\\"%s\\\", " +
-                        "    password: \\\"%s\\\", " +
-                        "    rpc: { rpc: \\\"\"\"%s\"\"\", commit: %b }" +
+                "mutation MyMutation { " +
+                        "  executeRPCForNetworkElement(params: { " +
+                        "    neName: \"%s\", " +
+                        "    hostname: \"%s\", " +
+                        "    username: \"%s\", " +
+                        "    password: \"%s\", " +
+                        "    rpc: { rpc: \"\"\"%s\"\"\", commit: %b }" +
                         "  }) " +
                         "}",
                 neName, hostname, username, password, rpcConfig, commit
