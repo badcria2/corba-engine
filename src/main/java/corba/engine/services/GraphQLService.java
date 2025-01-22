@@ -39,6 +39,7 @@ public class GraphQLService {
                 .onErrorResume(error -> {
                     System.err.println("Error al consultar GraphQL: {}" +  error.getMessage() +  error);
                     logger.error("Error al consultar GraphQL: {}", error.getMessage(), error);
+                    System.out.println("DATOS CON ERROR:: " + query);
                     return Mono.error(new RuntimeException("Error al consultar GraphQL: " + error.getMessage()));
                 })
                 .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2))
