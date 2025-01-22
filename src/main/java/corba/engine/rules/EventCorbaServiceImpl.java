@@ -160,7 +160,8 @@ public class EventCorbaServiceImpl implements EventCorbaService {
             response.subscribe(result -> {
                 System.out.println("Resultado: " + result);
             }, error -> {
-                System.err.println("Error mensaje:::: " +error.getStackTrace().toString() + "\n " + error.getMessage());
+                System.err.println("Error mensaje:::: " +error.getStackTrace().toString() );
+                System.err.println("Error mensaje2:::: " + "\n " + error.getMessage().toString());
             });
         }catch (Exception ex){
             System.err.println("Error enviando mensaje::::" + ex.getMessage());
