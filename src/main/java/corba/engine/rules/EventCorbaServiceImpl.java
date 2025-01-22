@@ -153,12 +153,14 @@ public class EventCorbaServiceImpl implements EventCorbaService {
                         "</edit-config>";
         boolean commit = true;
         try {
+            System.out.println("LLEGAS ACA sendMessage" + rpcConfig);
+
             Mono<GraphQLResponse> response = graphQLService.executeRPCForNetworkElement(neName, hostname, username, password, rpcConfig, commit);
 
             response.subscribe(result -> {
                 System.out.println("Resultado: " + result);
             }, error -> {
-                System.err.println("Error mensaje:::: " +error.getStackTrace() + "\n " + error.getMessage());
+                System.err.println("Error mensaje:::: " +error.getStackTrace().toString() + "\n " + error.getMessage());
             });
         }catch (Exception ex){
             System.err.println("Error enviando mensaje::::" + ex.getMessage());
