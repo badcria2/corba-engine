@@ -130,7 +130,7 @@ public class EventCorbaServiceImpl implements EventCorbaService {
     }
 
     @Override
-    public void sendMessage(String neName, String hostname, String interfaces, String description){
+    public void sendMessage(String neName, String hostname, String interfaces, String description) {
         String username = "admin";
         String password = "admin";
         String rpcConfig =
@@ -141,35 +141,51 @@ public class EventCorbaServiceImpl implements EventCorbaService {
                         "<config>\n" +
                         "  <interfaces xmlns=\"http://openconfig.net/yang/interfaces\">\n" +
                         "    <interface>\n" +
-                        "      <name>"+interfaces+"</name>\n" +
+                        "      <name>" + interfaces + "</name>\n" +
                         "      <config>\n" +
-                        "        <name>"+interfaces+"</name>\n" +
+                        "        <name>" + interfaces + "</name>\n" +
                         "        <type xmlns:ianaift=\"urn:ietf:params:xml:ns:yang:iana-if-type\">ianaift:ethernetCsmacd</type>\n" +
-                        "        <description>to_JNP-MX-304</description>\n" +
+                        "        <description>" + description + "</description>\n" +
                         "      </config>\n" +
                         "    </interface>\n" +
                         "  </interfaces>\n" +
                         "</config>\n" +
                         "</edit-config>";
         boolean commit = true;
+
         try {
-            System.out.println("LLEGAS ACA sendMessage" + rpcConfig);
+            System.out.println("LLEGAS ACA sendMessage: " + rpcConfig);
 
-            Mono<GraphQLResponse> response = graphQLService.executeRPCForNetworkElement(neName, hostname, username, password, rpcConfig, commit);
+            // Llamada al servicio GraphQL
+            Mono<GraphQLResponse> response = graphQLService.executeRPCForNetworkElement(
+                    neName, hostname, username, password, rpcConfig, commit
+            );
 
+            // Suscripción para manejar la respuesta y los errores
             response.subscribe(result -> {
-                System.out.println("Resultado: " + result);
+                System.out.println("Resultado exitoso: " + result);
             }, error -> {
-                System.err.println("Error mensaje:::: " +error.getStackTrace().toString() );
-                System.err.println("Error mensaje2:::: " + "\n " + error.getMessage().toString());
+                // Manejo mejorado de errores
+                System.err.println("Ocurrió un error al enviar el mensaje:");
+
+                // Mensaje de error
+                System.err.println("Mensaje del error: " + error.getMessage());
+
+                // Stack trace como texto legible
+                StringBuilder stackTrace = new StringBuilder();
+                for (StackTraceElement element : error.getStackTrace()) {
+                    stackTrace.append("\tat ").append(element).append("\n");
+                }
+                System.err.println("Detalles del stack trace:\n" + stackTrace);
             });
-        }catch (Exception ex){
-            System.err.println("Error enviando mensaje::::" + ex.getMessage());
-            throw ex;
+        } catch (Exception ex) {
+            // Captura y manejo de excepciones no controladas
+            System.err.println("Error inesperado al enviar el mensaje: " + ex.getMessage());
+            ex.printStackTrace();
+            throw ex; // Re-lanzar la excepción si es necesario
         }
-
-
     }
+
     private void sendMessageToKafka(KafkaRequest kafkaRequest) {
         try {
             kafkaProducerService.sendMessage("opt-alert-drools", kafkaRequest);
