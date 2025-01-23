@@ -99,9 +99,19 @@ public class GraphQLService {
         );
         String query = String.format("mutation MyMutation { executeRPCForNetworkElement(params: { neName: \"%s\", hostname: \"%s\", username: \"%s\", password: \"%s\", rpc: { rpc: \"%s\", commit: %b } }) }",
                 neName, hostname, username, password, rpcConfig, commit);
+        String graphqlQuery = "{"
+                + "\"query\": \"mutation MyMutation { "
+                + "executeRPCForNetworkElement(params: { "
+                + "neName: \\\"TOL-7750SR-1-87\\\", "
+                + "hostname: \\\"10.95.90.87\\\", "
+                + "username: \\\"admin\\\", "
+                + "password: \\\"admin\\\", "
+                + "rpc: { rpc: \\\"" + rpcConfig + "\\\", commit: true }"
+                + "}) }\""
+                + "}";
 
         // Llamar al método genérico para ejecutar el query
-        return executeQueryTemporal(query);
+        return executeQueryTemporal(graphqlQuery);
     }
 
 }
