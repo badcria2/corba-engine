@@ -49,6 +49,8 @@ public class GraphQLService {
     }
     private Mono<GraphQLResponse> executeQueryTemporal(String query) {
         logger.debug("Ejecutando consulta GraphQL: {}", query);
+
+        // Mutación en formato String
         String mutation = "mutation MyMutation { "
                 + "executeRPCForNetworkElement(params: { "
                 + "neName: \\\"TOL-7750SR-1-87\\\", "
@@ -73,16 +75,21 @@ public class GraphQLService {
                 + "</config>\n"
                 + "</edit-config>\"\"\", commit: true } "
                 + "}) }";
-        String requestBody = "{ \"query\": \"" + mutation + "\" }";
 
+        // Generar JSON
+        String requestBody = "{ \"query\": \"" + mutation + "\" }";
+        System.out.println("Request Body: " + requestBody);
+
+        // Enviar solicitud
         return webClient.post()
-                .header("Content-Type", CONTENT_TYPE)
+                .uri("/oc/graphql")
+                .header("Content-Type", "application/json")
                 .bodyValue(requestBody)
                 .retrieve()
                 .onStatus(HttpStatus::isError, response ->
                         response.bodyToMono(String.class)
                                 .flatMap(errorBody -> {
-                                    logger.error("Error del servidor: {}", errorBody);
+                                    logger.error("Estado HTTP: {}, Cuerpo de error: {}", response.statusCode(), errorBody);
                                     return Mono.error(new RuntimeException("Error del servidor: " + errorBody));
                                 })
                 )
@@ -92,8 +99,8 @@ public class GraphQLService {
                     logger.error("Error al consultar GraphQL: {}", error.getMessage(), error);
                     return Mono.error(new RuntimeException("Error al consultar GraphQL: " + error.getMessage()));
                 });
-
     }
+
 
     // Método para consultar todos los grupos disponibles
     public Mono<GraphQLResponse> getAllAvailableGroups() {
