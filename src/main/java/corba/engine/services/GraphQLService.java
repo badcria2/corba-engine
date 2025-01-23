@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
+import java.util.Map;
 
 @Service
 public class GraphQLService {
@@ -50,7 +51,7 @@ public class GraphQLService {
     private Mono<GraphQLResponse> executeQueryTemporal(String query) {
         logger.debug("Ejecutando consulta GraphQL: {}", query);
 
-        // Mutación en formato String
+        // Construir la mutación manualmente
         String mutation = "mutation MyMutation { "
                 + "executeRPCForNetworkElement(params: { "
                 + "neName: \\\"TOL-7750SR-1-87\\\", "
@@ -76,20 +77,18 @@ public class GraphQLService {
                 + "</edit-config>\"\"\", commit: true } "
                 + "}) }";
 
-        // Generar JSON
-        String requestBody = "{ \"query\": \"" + mutation + "\" }";
-        System.out.println("Request Body: " + requestBody);
+        // Crear el cuerpo de la solicitud
+        String requestBody = "{\"query\": \"" + mutation + "\"}";
 
-        // Enviar solicitud
+        // Usar WebClient para realizar la llamada
         return webClient.post()
-                //.uri("/oc/graphql")
                 .header("Content-Type", "application/json")
                 .bodyValue(requestBody)
                 .retrieve()
                 .onStatus(HttpStatus::isError, response ->
                         response.bodyToMono(String.class)
                                 .flatMap(errorBody -> {
-                                    logger.error("Estado HTTP: {}, Cuerpo de error: {}", response.statusCode(), errorBody);
+                                    logger.error("Error del servidor: {}", errorBody);
                                     return Mono.error(new RuntimeException("Error del servidor: " + errorBody));
                                 })
                 )
@@ -100,6 +99,7 @@ public class GraphQLService {
                     return Mono.error(new RuntimeException("Error al consultar GraphQL: " + error.getMessage()));
                 });
     }
+
 
 
     // Método para consultar todos los grupos disponibles
