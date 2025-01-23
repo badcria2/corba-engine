@@ -49,7 +49,6 @@ public class GraphQLService {
                         .doBeforeRetry(retrySignal -> logger.warn("Reintentando consulta GraphQL. Intento: {}", retrySignal.totalRetries() + 1)));
     }
     private Mono<GraphQLResponse> executeQueryTemporal(String query) {
-        logger.debug("Ejecutando consulta GraphQL: {}", query);
 
         // Construir la mutación manualmente
         String mutation = "mutation MyMutation { "
@@ -79,6 +78,7 @@ public class GraphQLService {
 
         // Crear el cuerpo de la solicitud
         String requestBody = "{\"query\": \"" + mutation + "\"}";
+        logger.debug("Ejecutando consulta GraphQL: {}", requestBody);
 
         // Usar WebClient para realizar la llamada
         return webClient.post()
