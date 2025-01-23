@@ -78,7 +78,7 @@ public class GraphQLService {
 
         // Crear el cuerpo de la solicitud
         String requestBody = "{\"query\": \"" + mutation + "\"}";
-        logger.debug("Ejecutando consulta GraphQL: {}", requestBody);
+        System.out.println("Ejecutando consulta GraphQL: {}"+ requestBody);
 
         // Usar WebClient para realizar la llamada
         return webClient.post()
