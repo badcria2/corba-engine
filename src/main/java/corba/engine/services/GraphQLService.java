@@ -82,7 +82,7 @@ public class GraphQLService {
 
         // Enviar solicitud
         return webClient.post()
-                .uri("/oc/graphql")
+                //.uri("/oc/graphql")
                 .header("Content-Type", "application/json")
                 .bodyValue(requestBody)
                 .retrieve()
