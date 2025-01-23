@@ -6,6 +6,7 @@ import corba.engine.response.GraphQLResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -46,6 +47,28 @@ public class GraphQLService {
                 .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2))
                         .doBeforeRetry(retrySignal -> logger.warn("Reintentando consulta GraphQL. Intento: {}", retrySignal.totalRetries() + 1)));
     }
+    private Mono<GraphQLResponse> executeQueryTemporal(String query) {
+        logger.debug("Ejecutando consulta GraphQL: {}", query);
+
+        return webClient.post()
+                .header("Content-Type", CONTENT_TYPE)
+                .bodyValue("{\"query\":\"" + query + "\"}")
+                .retrieve()
+                .onStatus(HttpStatus::isError, response ->
+                        response.bodyToMono(String.class)
+                                .flatMap(errorBody -> {
+                                    logger.error("Error del servidor: {}", errorBody);
+                                    return Mono.error(new RuntimeException("Error del servidor: " + errorBody));
+                                })
+                )
+                .bodyToMono(GraphQLResponse.class)
+                .doOnNext(response -> logger.info("Respuesta GraphQL recibida: {}", response))
+                .onErrorResume(error -> {
+                    logger.error("Error al consultar GraphQL: {}", error.getMessage(), error);
+                    return Mono.error(new RuntimeException("Error al consultar GraphQL: " + error.getMessage()));
+                });
+
+    }
 
     // Método para consultar todos los grupos disponibles
     public Mono<GraphQLResponse> getAllAvailableGroups() {
@@ -74,9 +97,11 @@ public class GraphQLService {
                         "}",
                 neName, hostname, username, password, rpcConfig, commit
         );
+        String query = String.format("mutation MyMutation { executeRPCForNetworkElement(params: { neName: \"%s\", hostname: \"%s\", username: \"%s\", password: \"%s\", rpc: { rpc: \"%s\", commit: %b } }) }",
+                neName, hostname, username, password, rpcConfig, commit);
 
         // Llamar al método genérico para ejecutar el query
-        return executeQuery(mutation);
+        return executeQueryTemporal(query);
     }
 
 }

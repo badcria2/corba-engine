@@ -133,24 +133,25 @@ public class EventCorbaServiceImpl implements EventCorbaService {
     public void sendMessage(String neName, String hostname, String interfaces, String description) {
         String username = "admin";
         String password = "admin";
-        String rpcConfig =
-                "<edit-config>\n" +
-                        "<target>\n" +
-                        "  <candidate/>\n" +
-                        "</target>\n" +
-                        "<config>\n" +
-                        "  <interfaces xmlns=\"http://openconfig.net/yang/interfaces\">\n" +
-                        "    <interface>\n" +
-                        "      <name>" + interfaces + "</name>\n" +
-                        "      <config>\n" +
-                        "        <name>" + interfaces + "</name>\n" +
-                        "        <type xmlns:ianaift=\"urn:ietf:params:xml:ns:yang:iana-if-type\">ianaift:ethernetCsmacd</type>\n" +
-                        "        <description>" + description + "</description>\n" +
-                        "      </config>\n" +
-                        "    </interface>\n" +
-                        "  </interfaces>\n" +
-                        "</config>\n" +
-                        "</edit-config>";
+        String rpcConfig = "<edit-config>\\n" +
+                "<target>\\n" +
+                "  <candidate/>\\n" +
+                "</target>\\n" +
+                "<config>\\n" +
+                "  <interfaces xmlns=\\\"http://openconfig.net/yang/interfaces\\\">\\n" +
+                "    <interface>\\n" +
+                "      <name>1/2/c1/1</name>\\n" +
+                "      <config>\\n" +
+                "        <name>1/2/c1/1</name>\\n" +
+                "        <type xmlns:ianaift=\\\"urn:ietf:params:xml:ns:yang:iana-if-type\\\">ianaift:ethernetCsmacd</type>\\n" +
+                "        <description>to_JNP-MX-304</description>\\n" +
+                "      </config>\\n" +
+                "    </interface>\\n" +
+                "  </interfaces>\\n" +
+                "</config>\\n" +
+                "</edit-config>";
+
+
         boolean commit = true;
 
         try {
