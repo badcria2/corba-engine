@@ -49,10 +49,35 @@ public class GraphQLService {
     }
     private Mono<GraphQLResponse> executeQueryTemporal(String query) {
         logger.debug("Ejecutando consulta GraphQL: {}", query);
+        String mutation = "mutation MyMutation { "
+                + "executeRPCForNetworkElement(params: { "
+                + "neName: \\\"TOL-7750SR-1-87\\\", "
+                + "hostname: \\\"10.95.90.87\\\", "
+                + "username: \\\"admin\\\", "
+                + "password: \\\"admin\\\", "
+                + "rpc: { rpc: \\\"\"\"<edit-config>\n"
+                + "<target>\n"
+                + "  <candidate/>\n"
+                + "</target>\n"
+                + "<config>\n"
+                + "  <interfaces xmlns=\\\"http://openconfig.net/yang/interfaces\\\">\n"
+                + "    <interface>\n"
+                + "      <name>1/2/c1/1</name>\n"
+                + "      <config>\n"
+                + "        <name>1/2/c1/1</name>\n"
+                + "        <type xmlns:ianaift=\\\"urn:ietf:params:xml:ns:yang:iana-if-type\\\">ianaift:ethernetCsmacd</type>\n"
+                + "        <description>to_JNP-MX-304</description>\n"
+                + "      </config>\n"
+                + "    </interface>\n"
+                + "  </interfaces>\n"
+                + "</config>\n"
+                + "</edit-config>\"\"\", commit: true } "
+                + "}) }";
+        String requestBody = "{ \"query\": \"" + mutation + "\" }";
 
         return webClient.post()
                 .header("Content-Type", CONTENT_TYPE)
-                .bodyValue("{\"query\":\"" + query + "\"}")
+                .bodyValue(requestBody)
                 .retrieve()
                 .onStatus(HttpStatus::isError, response ->
                         response.bodyToMono(String.class)
