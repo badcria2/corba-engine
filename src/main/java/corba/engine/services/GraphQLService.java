@@ -67,11 +67,11 @@ public class GraphQLService {
         String requestBody = "{ \"query\": \"" + graphqlQuery + "}";
 
         System.out.println("Enviando solicitud GraphQL TT: " + requestBody);
+        String mutation = "{ \"query\": \"mutation { createUser(input: { name: \\\"John Doe\\\", email: \\\"john.doe@example.com\\\" }) { id name email } }\" }";
 
         return webClient.post()
                 //.uri("/oc/graphql") // Cambia según el endpoint correcto
-                .header("Content-Type", "application/json")
-                .bodyValue(requestBody)
+                .bodyValue(mutation)
                 .retrieve()
                 .onStatus(HttpStatus::isError, response -> response.bodyToMono(String.class)
                         .flatMap(errorBody -> {
