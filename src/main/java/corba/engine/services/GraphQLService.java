@@ -69,7 +69,7 @@ public class GraphQLService {
         System.out.println("Enviando solicitud GraphQL TT: " + requestBody);
 
         return webClient.post()
-                //.uri("/oc/graphql") // Cambia según el endpoint correcto
+                .uri("http://10.95.90.64:10000/oc/graphql") // Cambia según el endpoint correcto
                 .bodyValue(graphqlQuery)
                 .retrieve()
                 .onStatus(HttpStatus::isError, response -> response.bodyToMono(String.class)
