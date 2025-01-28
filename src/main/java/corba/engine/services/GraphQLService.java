@@ -70,7 +70,7 @@ public class GraphQLService {
 
         return webClient.post()
                 .header("Content-Type", CONTENT_TYPE)
-                .bodyValue(graphqlQuery)
+                .bodyValue(requestBody)
                 .retrieve()
                 .onStatus(HttpStatus::isError, response -> response.bodyToMono(String.class)
                         .flatMap(errorBody -> {
