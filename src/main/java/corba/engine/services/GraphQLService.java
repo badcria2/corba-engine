@@ -44,7 +44,7 @@ public class GraphQLService {
 
     // Método genérico para realizar consultas GraphQL
     private Mono<GraphQLResponse> executeQuery(String query) {
-        logger.debug("Ejecutando consulta GraphQL: {}", query);
+        System.out.println("Ejecutando consulta GraphQL: " + "{\"query\":\"" + query + "\"}");
 
         return webClient.post()
                 .header("Content-Type", CONTENT_TYPE)
@@ -70,7 +70,7 @@ public class GraphQLService {
 
         return webClient.post()
                 .header("Content-Type", CONTENT_TYPE)
-                .bodyValue(requestBody)
+                .bodyValue("{\"query\":\"" + graphqlQuery + "\"}")
                 .retrieve()
                 .onStatus(HttpStatus::isError, response -> response.bodyToMono(String.class)
                         .flatMap(errorBody -> {
