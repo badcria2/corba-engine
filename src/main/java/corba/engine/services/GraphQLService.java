@@ -69,7 +69,7 @@ public class GraphQLService {
         System.out.println("Enviando solicitud GraphQL TT: " + requestBody);
 
         return webClient.post()
-                .uri("/oc/graphql") // Cambia según el endpoint correcto
+                //.uri("/oc/graphql") // Cambia según el endpoint correcto
                 .header("Content-Type", "application/json")
                 .bodyValue(requestBody)
                 .retrieve()
