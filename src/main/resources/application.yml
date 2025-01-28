@@ -12,3 +12,8 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   webflux:
     base-path: /oc/graphql
+logging:
+  level:
+    org.springframework.web.reactive.function.client: DEBUG
+    reactor.netty.http.client: DEBUG
+    reactor.netty: DEBUG

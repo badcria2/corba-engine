@@ -3,13 +3,17 @@ package corba.engine.services;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import corba.engine.models.KafkaData;
 import corba.engine.response.GraphQLResponse;
+import io.netty.handler.logging.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.transport.logging.AdvancedByteBufFormat;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
@@ -23,8 +27,18 @@ public class GraphQLService {
     private final WebClient webClient;
 
     // Constructor que inicializa WebClient con la URL base
+
     public GraphQLService(WebClient.Builder webClientBuilder, @Value("${graphql.endpoint:http://10.95.90.64:10000/oc/graphql}") String baseUrl) {
-        this.webClient = webClientBuilder.baseUrl(baseUrl).build();
+        // Configurar wiretap para activar logs HTTP detallados
+        HttpClient httpClient = HttpClient.create()
+                .wiretap("reactor.netty.http.client.HttpClient", LogLevel.DEBUG, AdvancedByteBufFormat.TEXTUAL);
+
+        // Crear el WebClient con logs habilitados
+        this.webClient = webClientBuilder
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .baseUrl(baseUrl)
+                .build();
+
         logger.info("GraphQLService inicializado con URL base: {}", baseUrl);
     }
 
@@ -48,31 +62,30 @@ public class GraphQLService {
                 .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2))
                         .doBeforeRetry(retrySignal -> logger.warn("Reintentando consulta GraphQL. Intento: {}", retrySignal.totalRetries() + 1)));
     }
-    public Mono<GraphQLResponse> executeQueryTemporal(String query) {
-        // Crear el cuerpo del request como JSON
-        String requestBody = "{\"query\": \"" + query.replaceAll("\"", "\\\\\"") + "\"}";
-        System.out.println("Ejecutando consulta GraphQL Temporal: " + requestBody);
+    public Mono<GraphQLResponse> executeQueryTemporal(String graphqlQuery) {
+        // Construir el JSON del body manualmente
+        String requestBody = "{ \"query\": \"" + graphqlQuery.replaceAll("\"", "\\\\\"") + "\" }";
+
+        System.out.println("Enviando solicitud GraphQL TT: " + requestBody);
 
         return webClient.post()
-                //.uri("/oc/graphql") // Verifica que esta URI sea correcta
+                .uri("/oc/graphql") // Cambia según el endpoint correcto
                 .header("Content-Type", "application/json")
-                .bodyValue(requestBody) // Usa el JSON estructurado
+                .bodyValue(requestBody)
                 .retrieve()
-                .onStatus(
-                        HttpStatus::isError,
-                        response -> response.bodyToMono(String.class)
-                                .flatMap(errorBody -> {
-                                    logger.error("Error del servidor: {}", errorBody);
-                                    return Mono.error(new RuntimeException("Error del servidor: " + errorBody));
-                                })
-                )
+                .onStatus(HttpStatus::isError, response -> response.bodyToMono(String.class)
+                        .flatMap(errorBody -> {
+                            System.err.println("Error del servidor: " + errorBody);
+                            return Mono.error(new RuntimeException("Error del servidor: " + errorBody));
+                        }))
                 .bodyToMono(GraphQLResponse.class)
-                .doOnNext(response -> logger.info("Respuesta GraphQL recibida: {}", response))
+                .doOnNext(response -> System.out.println("Respuesta GraphQL recibida: " + response))
                 .onErrorResume(error -> {
-                    logger.error("Error al consultar GraphQL: {}", error.getMessage(), error);
+                    System.err.println("Error al consultar GraphQL: " + error.getMessage());
                     return Mono.error(new RuntimeException("Error al consultar GraphQL: " + error.getMessage()));
                 });
     }
+
 
 
 
