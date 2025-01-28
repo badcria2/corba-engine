@@ -134,21 +134,21 @@ public class EventCorbaServiceImpl implements EventCorbaService {
         String username = "admin";
         String password = "admin";
         String rpcConfig = "<edit-config>\\n" +
-                "<target>\\n" +
-                "  <candidate/>\\n" +
-                "</target>\\n" +
-                "<config>\\n" +
-                "  <interfaces xmlns=\\\"http://openconfig.net/yang/interfaces\\\">\\n" +
-                "    <interface>\\n" +
-                "      <name>1/2/c1/1</name>\\n" +
-                "      <config>\\n" +
-                "        <name>1/2/c1/1</name>\\n" +
-                "        <type xmlns:ianaift=\\\"urn:ietf:params:xml:ns:yang:iana-if-type\\\">ianaift:ethernetCsmacd</type>\\n" +
-                "        <description>to_JNP-MX-304</description>\\n" +
-                "      </config>\\n" +
-                "    </interface>\\n" +
-                "  </interfaces>\\n" +
-                "</config>\\n" +
+                "<target>" +
+                "  <candidate/>" +
+                "</target>" +
+                "<config>" +
+                "  <interfaces xmlns=\\\"http://openconfig.net/yang/interfaces\\\">" +
+                "    <interface>" +
+                "      <name>1/2/c1/1</name>" +
+                "      <config>" +
+                "        <name>1/2/c1/1</name>" +
+                "        <type xmlns:ianaift=\\\"urn:ietf:params:xml:ns:yang:iana-if-type\\\">ianaift:ethernetCsmacd</type>" +
+                "        <description>to_JNP-MX-304</description>" +
+                "      </config>" +
+                "    </interface>" +
+                "  </interfaces>" +
+                "</config>" +
                 "</edit-config>";
 
 
