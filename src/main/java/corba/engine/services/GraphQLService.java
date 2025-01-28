@@ -71,7 +71,7 @@ public class GraphQLService {
 
         return webClient.post()
                 //.uri("/oc/graphql") // Cambia según el endpoint correcto
-                .bodyValue(mutation)
+                .bodyValue(graphqlQuery)
                 .retrieve()
                 .onStatus(HttpStatus::isError, response -> response.bodyToMono(String.class)
                         .flatMap(errorBody -> {
@@ -118,7 +118,7 @@ public class GraphQLService {
         );
         String query = String.format("mutation MyMutation { executeRPCForNetworkElement(params: { neName: \"%s\", hostname: \"%s\", username: \"%s\", password: \"%s\", rpc: { rpc: \"%s\", commit: %b } }) }",
                 neName, hostname, username, password, rpcConfig, commit);
-        String graphqlQuery = "mutation MyMutation {\n" +
+        String graphqlQuery = "mutation {\n" +
                 "  executeRPCForNetworkElement(\n" +
                 "    params: {\n" +
                 "      neName: \"TOL-7750SR-1-87\",\n" +
