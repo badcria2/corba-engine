@@ -67,7 +67,7 @@ public class GraphQLService {
         String requestBody = "{ \"query\": \"" + graphqlQuery + "}";
 
         System.out.println("Enviando solicitud GraphQL TT: " + requestBody);
-        String mutation = "{ \"query\": \"mutation { createUser(input: { name: \\\"John Doe\\\", email: \\\"john.doe@example.com\\\" }) { id name email } }\" }";
+        String mutation = "{ \"query\": \"mutation { executeRPCForNetworkElement (input: { name: \\\"John Doe\\\", email: \\\"john.doe@example.com\\\" }) { id name email } }\" }";
 
         return webClient.post()
                 //.uri("/oc/graphql") // Cambia según el endpoint correcto
