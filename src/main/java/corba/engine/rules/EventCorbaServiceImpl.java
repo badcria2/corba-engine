@@ -133,17 +133,17 @@ public class EventCorbaServiceImpl implements EventCorbaService {
     public void sendMessage(String neName, String hostname, String interfaces, String description) {
         String username = "admin";
         String password = "admin";
-        String rpcConfig = "<edit-config>\\n" +
+        String rpcConfig = "<edit-config>" +
                 "<target>" +
                 "  <candidate/>" +
                 "</target>" +
                 "<config>" +
-                "  <interfaces xmlns=\\\"http://openconfig.net/yang/interfaces\\\">" +
+                "  <interfaces xmlns=\"http://openconfig.net/yang/interfaces\">" +
                 "    <interface>" +
                 "      <name>1/2/c1/1</name>" +
                 "      <config>" +
                 "        <name>1/2/c1/1</name>" +
-                "        <type xmlns:ianaift=\\\"urn:ietf:params:xml:ns:yang:iana-if-type\\\">ianaift:ethernetCsmacd</type>" +
+                "        <type xmlns:ianaift=\"urn:ietf:params:xml:ns:yang:iana-if-type\">ianaift:ethernetCsmacd</type>" +
                 "        <description>to_JNP-MX-304</description>" +
                 "      </config>" +
                 "    </interface>" +
