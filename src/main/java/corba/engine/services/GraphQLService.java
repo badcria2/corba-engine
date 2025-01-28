@@ -67,7 +67,6 @@ public class GraphQLService {
         String requestBody = "{ \"query\": \"" + graphqlQuery + "}";
 
         System.out.println("Enviando solicitud GraphQL TT: " + requestBody);
-        String mutation = "{ \"query\": \"mutation { executeRPCForNetworkElement (input: { name: \\\"John Doe\\\", email: \\\"john.doe@example.com\\\" }) { id name email } }\" }";
 
         return webClient.post()
                 //.uri("/oc/graphql") // Cambia según el endpoint correcto
@@ -105,7 +104,7 @@ public class GraphQLService {
     public Mono<GraphQLResponse> executeRPCForNetworkElement(String neName, String hostname, String username, String password, String rpcConfig, boolean commit) {
         // Construir el query GraphQL
         String mutation = String.format(
-                "mutation MyMutation { " +
+                "mutation  { " +
                         "  executeRPCForNetworkElement(params: { " +
                         "    neName: \"%s\", " +
                         "    hostname: \"%s\", " +
@@ -118,22 +117,10 @@ public class GraphQLService {
         );
         String query = String.format("mutation MyMutation { executeRPCForNetworkElement(params: { neName: \"%s\", hostname: \"%s\", username: \"%s\", password: \"%s\", rpc: { rpc: \"%s\", commit: %b } }) }",
                 neName, hostname, username, password, rpcConfig, commit);
-        String graphqlQuery = "mutation {\n" +
-                "  executeRPCForNetworkElement(\n" +
-                "    params: {\n" +
-                "      neName: \"TOL-7750SR-1-87\",\n" +
-                "      hostname: \"10.95.90.87\",\n" +
-                "      username: \"admin\",\n" +
-                "      password: \"admin\",\n" +
-                "      rpc: {rpc: \"\"\"\n" +
 
-                "      \"\"\", commit: true}\n" +
-                "    }\n" +
-                "  )\n" +
-                "}";
 
         // Llamar al método genérico para ejecutar el query
-        return executeQueryTemporal(graphqlQuery);
+        return executeQueryTemporal(mutation);
     }
 
 }
