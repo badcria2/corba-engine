@@ -50,40 +50,13 @@ public class GraphQLService {
     }
     private Mono<GraphQLResponse> executeQueryTemporal(String query) {
 
-        // Construir la mutación manualmente
-        String mutation = "mutation MyMutation { "
-                + "executeRPCForNetworkElement(params: { "
-                + "neName: \\\"TOL-7750SR-1-87\\\", "
-                + "hostname: \\\"10.95.90.87\\\", "
-                + "username: \\\"admin\\\", "
-                + "password: \\\"admin\\\", "
-                + "rpc: { rpc: \\\"\"\"<edit-config>\n"
-                + "<target>\n"
-                + "  <candidate/>\n"
-                + "</target>\n"
-                + "<config>\n"
-                + "  <interfaces xmlns=\\\"http://openconfig.net/yang/interfaces\\\">\n"
-                + "    <interface>\n"
-                + "      <name>1/2/c1/1</name>\n"
-                + "      <config>\n"
-                + "        <name>1/2/c1/1</name>\n"
-                + "        <type xmlns:ianaift=\\\"urn:ietf:params:xml:ns:yang:iana-if-type\\\">ianaift:ethernetCsmacd</type>\n"
-                + "        <description>to_JNP-MX-304</description>\n"
-                + "      </config>\n"
-                + "    </interface>\n"
-                + "  </interfaces>\n"
-                + "</config>\n"
-                + "</edit-config>\"\"\", commit: true } "
-                + "}) }";
-
         // Crear el cuerpo de la solicitud
-        String requestBody = "{\"query\": \"" + mutation + "\"}";
-        System.out.println("Ejecutando consulta GraphQL: {}"+ requestBody);
+        System.out.println("Ejecutando consulta GraphQL: {}"+ query  );
 
         // Usar WebClient para realizar la llamada
         return webClient.post()
                 .header("Content-Type", "application/json")
-                .bodyValue(requestBody)
+                .bodyValue(query)
                 .retrieve()
                 .onStatus(HttpStatus::isError, response ->
                         response.bodyToMono(String.class)
@@ -131,16 +104,35 @@ public class GraphQLService {
         );
         String query = String.format("mutation MyMutation { executeRPCForNetworkElement(params: { neName: \"%s\", hostname: \"%s\", username: \"%s\", password: \"%s\", rpc: { rpc: \"%s\", commit: %b } }) }",
                 neName, hostname, username, password, rpcConfig, commit);
-        String graphqlQuery = "{"
-                + "\"query\": \"mutation MyMutation { "
-                + "executeRPCForNetworkElement(params: { "
-                + "neName: \\\"TOL-7750SR-1-87\\\", "
-                + "hostname: \\\"10.95.90.87\\\", "
-                + "username: \\\"admin\\\", "
-                + "password: \\\"admin\\\", "
-                + "rpc: { rpc: \\\"" + rpcConfig + "\\\", commit: true }"
-                + "}) }\""
-                + "}";
+        String graphqlQuery = "mutation MyMutation {\n" +
+                "  executeRPCForNetworkElement(\n" +
+                "    params: {\n" +
+                "      neName: \"TOL-7750SR-1-87\",\n" +
+                "      hostname: \"10.95.90.87\",\n" +
+                "      username: \"admin\",\n" +
+                "      password: \"admin\",\n" +
+                "      rpc: {rpc: \"\"\"\n" +
+                "        <edit-config>\n" +
+                "          <target>\n" +
+                "            <candidate/>\n" +
+                "          </target>\n" +
+                "          <config>\n" +
+                "            <interfaces xmlns=\"http://openconfig.net/yang/interfaces\">\n" +
+                "              <interface>\n" +
+                "                <name>1/2/c1/1</name>\n" +
+                "                <config>\n" +
+                "                  <name>1/2/c1/1</name>\n" +
+                "                  <type xmlns:ianaift=\"urn:ietf:params:xml:ns:yang:iana-if-type\">ianaift:ethernetCsmacd</type>\n" +
+                "                  <description>to_JNP-MX-304</description>\n" +
+                "                </config>\n" +
+                "              </interface>\n" +
+                "            </interfaces>\n" +
+                "          </config>\n" +
+                "        </edit-config>\n" +
+                "      \"\"\", commit: true}\n" +
+                "    }\n" +
+                "  )\n" +
+                "}";
 
         // Llamar al método genérico para ejecutar el query
         return executeQueryTemporal(graphqlQuery);
