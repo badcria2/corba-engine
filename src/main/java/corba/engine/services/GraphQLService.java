@@ -62,15 +62,14 @@ public class GraphQLService {
                 .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2))
                         .doBeforeRetry(retrySignal -> logger.warn("Reintentando consulta GraphQL. Intento: {}", retrySignal.totalRetries() + 1)));
     }
-    public Mono<GraphQLResponse> executeQueryTemporal(String graphqlQuery) {
+    public Mono<GraphQLResponse> executeQueryTemporal(String query) {
         // Construir el JSON del body manualmente
-        String requestBody = "{ \"query\": \"" + graphqlQuery + "}";
 
-        System.out.println("Enviando solicitud GraphQL TT: " + requestBody);
+        System.out.println("Enviando solicitud GraphQL TT: " + query);
 
         return webClient.post()
                 .header("Content-Type", CONTENT_TYPE)
-                .bodyValue("{\"query\":\"" + graphqlQuery + "\"}")
+                .bodyValue("{\"query\":\"" + query + "\"}")
                 .retrieve()
                 .onStatus(HttpStatus::isError, response -> response.bodyToMono(String.class)
                         .flatMap(errorBody -> {
