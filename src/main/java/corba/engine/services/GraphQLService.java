@@ -48,18 +48,19 @@ public class GraphQLService {
                 .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2))
                         .doBeforeRetry(retrySignal -> logger.warn("Reintentando consulta GraphQL. Intento: {}", retrySignal.totalRetries() + 1)));
     }
-    private Mono<GraphQLResponse> executeQueryTemporal(String query) {
+    public Mono<GraphQLResponse> executeQueryTemporal(String query) {
+        // Crear el cuerpo del request como JSON
+        String requestBody = "{\"query\": \"" + query.replaceAll("\"", "\\\\\"") + "\"}";
+        System.out.println("Ejecutando consulta GraphQL Temporal: " + requestBody);
 
-        // Crear el cuerpo de la solicitud
-        System.out.println("Ejecutando consulta GraphQL: {}"+ query  );
-
-        // Usar WebClient para realizar la llamada
         return webClient.post()
+                //.uri("/oc/graphql") // Verifica que esta URI sea correcta
                 .header("Content-Type", "application/json")
-                .bodyValue(query)
+                .bodyValue(requestBody) // Usa el JSON estructurado
                 .retrieve()
-                .onStatus(HttpStatus::isError, response ->
-                        response.bodyToMono(String.class)
+                .onStatus(
+                        HttpStatus::isError,
+                        response -> response.bodyToMono(String.class)
                                 .flatMap(errorBody -> {
                                     logger.error("Error del servidor: {}", errorBody);
                                     return Mono.error(new RuntimeException("Error del servidor: " + errorBody));
