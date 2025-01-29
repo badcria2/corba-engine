@@ -65,7 +65,7 @@ public class GraphQLService {
     public Mono<GraphQLResponse> executeQueryTemporal(String query) {
         // Construir el JSON del body manualmente
 
-        System.out.println("Enviando solicitud GraphQL TT: " + query);
+        System.out.println("Enviando solicitud GraphQL TT: " + "{\"query\":\"" + query + "\"}");
 
         return webClient.post()
                 .header("Content-Type", CONTENT_TYPE)
