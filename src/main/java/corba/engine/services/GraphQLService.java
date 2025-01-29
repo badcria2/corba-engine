@@ -117,7 +117,7 @@ public class GraphQLService {
         String query = String.format("mutation MyMutation { executeRPCForNetworkElement(params: { neName: \"%s\", hostname: \"%s\", username: \"%s\", password: \"%s\", rpc: { rpc: \"%s\", commit: %b } }) }",
                 neName, hostname, username, password, rpcConfig, commit);
 
-
+        mutation = String.format("mutation { executeRPCForNetworkElement(group: \\\"%s\\\") }", "group");
         // Llamar al método genérico para ejecutar el query
         return executeQueryTemporal(mutation);
     }
