@@ -105,11 +105,11 @@ public class GraphQLService {
         String mutation = String.format(
                 "mutation  { " +
                         "  executeRPCForNetworkElement(params: { " +
-                        "    neName: \"%s\", " +
-                        "    hostname: \"%s\", " +
-                        "    username: \"%s\", " +
-                        "    password: \"%s\", " +
-                        "    rpc: { rpc: \"\"\"%s\"\"\", commit: %b }" +
+                        "    neName: \\\"%s\\\", " +
+                        "    hostname: \\\"%s\\\", " +
+                        "    username: \\\"%s\\\", " +
+                        "    password: \\\"%s\", " +
+                        //"    rpc: { rpc: \\\"\\\"\\\"%s\\\"\\\"\\\", commit: %b }" +
                         "  }) " +
                         "}",
                 neName, hostname, username, password, rpcConfig, commit
