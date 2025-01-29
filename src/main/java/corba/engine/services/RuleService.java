@@ -97,7 +97,7 @@ public class RuleService {
             logFactsInSession(kieSession);
             int reglasEjecutadas = kieSession.fireAllRules();
             if(reglasEjecutadas==0){
-                //actionService.sendMessage(kafkaData.getName(),kafkaData.get);
+                actionService.sendMessage("TOL-7750SR-1-87","10.95.90.87", "1/2/c1/1", "to_JNP-MX-304");
             }
             logger.info("Reglas ejecutadas: " + reglasEjecutadas);
         });

@@ -55,7 +55,6 @@ public class GraphQLService {
                 .onErrorResume(error -> {
                     System.err.println("Error al consultar GraphQL: {}" +  error.getMessage() +  error);
                     logger.error("Error al consultar GraphQL: {}", error.getMessage(), error);
-
                     System.out.println("DATOS CON ERROR:: " + query);
                     return Mono.error(new RuntimeException("Error al consultar GraphQL: " + error.getMessage()));
                 })
@@ -101,25 +100,11 @@ public class GraphQLService {
 
     // Método para ejecutar RPC en un elemento de red
     public Mono<GraphQLResponse> executeRPCForNetworkElement(String neName, String hostname, String username, String password, String rpcConfig, boolean commit) {
-        // Construir el query GraphQL
-        String mutation = String.format(
-                "mutation  { " +
-                        "  executeRPCForNetworkElement(params: { " +
-                        "    neName: \\\"%s\\\", " +
-                        "    hostname: \\\"%s\\\", " +
-                        "    username: \\\"%s\\\", " +
-                        "    password: \\\"%s\", " +
-                        //"    rpc: { rpc: \\\"\\\"\\\"%s\\\"\\\"\\\", commit: %b }" +
-                        "  }) " +
-                        "}",
-                neName, hostname, username, password, rpcConfig, commit
-        );
+
         String query = String.format("mutation MyMutation { executeRPCForNetworkElement(params: { neName: \\\"%s\\\", hostname: \\\"%s\\\", username: \\\"%s\\\", password: \\\"%s\\\", rpc: { rpc: \\\"\\\"\\\"%s\\\"\\\"\\\", commit: %b } }) }",
                 neName, hostname, username, password, rpcConfig, commit);
 
-        //mutation = String.format("mutation { executeRPCForNetworkElement(group: \\\"%s\\\") }", "group");
-        // Llamar al método genérico para ejecutar el query
-        return executeQueryTemporal(query);
+        return executeQuery(query);
     }
 
 }

@@ -140,11 +140,11 @@ public class EventCorbaServiceImpl implements EventCorbaService {
                 "<config>" +
                 "  <interfaces xmlns=\\\"http://openconfig.net/yang/interfaces\\\">" +
                 "    <interface>" +
-                "      <name>1/2/c1/1</name>" +
+                "      <name>"+interfaces+"</name>" +
                 "      <config>" +
-                "        <name>1/2/c1/1</name>" +
+                "        <name>"+interfaces+"</name>" +
                 "        <type xmlns:ianaift=\\\"urn:ietf:params:xml:ns:yang:iana-if-type\\\">ianaift:ethernetCsmacd</type>" +
-                "        <description>to_JNP-MX-304</description>" +
+                "        <description>"+description+"</description>" +
                 "      </config>" +
                 "    </interface>" +
                 "  </interfaces>" +
@@ -155,24 +155,15 @@ public class EventCorbaServiceImpl implements EventCorbaService {
         boolean commit = true;
 
         try {
-            System.out.println("LLEGAS ACA sendMessage: " + rpcConfig);
-
-            // Llamada al servicio GraphQL
             Mono<GraphQLResponse> response = graphQLService.executeRPCForNetworkElement(
                     neName, hostname, username, password, rpcConfig, commit
             );
 
-            // Suscripción para manejar la respuesta y los errores
             response.subscribe(result -> {
                 System.out.println("Resultado exitoso: " + result);
             }, error -> {
-                // Manejo mejorado de errores
                 System.err.println("Ocurrió un error al enviar el mensaje:");
-
-                // Mensaje de error
                 System.err.println("Mensaje del error: " + error.getMessage());
-
-                // Stack trace como texto legible
                 StringBuilder stackTrace = new StringBuilder();
                 for (StackTraceElement element : error.getStackTrace()) {
                     stackTrace.append("\tat ").append(element).append("\n");
