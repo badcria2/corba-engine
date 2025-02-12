@@ -10,27 +10,27 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.9</version>
+        <version>2.7.9</version> <!-- Asegura compatibilidad con Java 17 -->
     </parent>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>1.8</java.version>
-        <lombok.version>1.14.8</lombok.version>
+        <java.version>17</java.version>
+        <lombok.version>1.18.28</lombok.version> <!-- Última versión estable -->
         <log4jdbc.log4j2.version>1.16</log4jdbc.log4j2.version>
-        <rest.assured.version>2.3.3</rest.assured.version>
-        <spring-loaded.version>1.2.5.RELEASE</spring-loaded.version>
-        <drools.version>7.74.0.Final</drools.version>
+        <rest.assured.version>5.3.1</rest.assured.version> <!-- Versión compatible con Java 17 -->
         <drools.version>7.62.0.Final</drools.version>
         <spring-cloud.version>2022.0.4</spring-cloud.version>
-
     </properties>
 
     <dependencies>
-
+        <!-- Spring Boot & MongoDB -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-mongodb</artifactId>
         </dependency>
+
+        <!-- Web & WebFlux -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -39,30 +39,37 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
+
+        <!-- Avro -->
         <dependency>
             <groupId>org.apache.avro</groupId>
             <artifactId>avro</artifactId>
-            <version>1.11.1</version> <!-- Utiliza la versión adecuada -->
+            <version>1.11.1</version>
         </dependency>
+
+        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
-        <!-- Dependencia de Spring Kafka -->
+
+        <!-- Spring Kafka -->
         <dependency>
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
-            <version>2.8.11</version> <!-- Versión compatible con Spring Boot 2.7.x -->
+            <version>2.8.11</version>
         </dependency>
+
+        <!-- Spring Boot Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
 
-        <!-- Drools Core -->
+        <!-- Drools -->
         <dependency>
             <groupId>org.kie</groupId>
             <artifactId>kie-api</artifactId>
@@ -73,31 +80,44 @@
             <artifactId>drools-core</artifactId>
             <version>${drools.version}</version>
         </dependency>
-
-        <!-- Drools Spring -->
         <dependency>
             <groupId>org.kie</groupId>
             <artifactId>kie-spring</artifactId>
             <version>${drools.version}</version>
         </dependency>
-
-
     </dependencies>
 
     <build>
         <plugins>
+            <!-- Maven Compiler Plugin para Java 17 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+
+            <!-- Spring Boot Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>springloaded</artifactId>
-                        <version>${spring-loaded.version}</version>
-                    </dependency>
-                </dependencies>
-
             </plugin>
         </plugins>
     </build>
+    <repositories>
+        <repository>
+            <id>jboss-public</id>
+            <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
 </project>
